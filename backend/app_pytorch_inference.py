@@ -56,7 +56,7 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 CORS_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    "https://your-frontend-app.vercel.app", # REPLACE THIS with your actual Vercel URL after deploying frontend
+    "https://ai-eye-disease-detection-chi.vercel.app/", # REPLACE THIS with your actual Vercel URL after deploying frontend
 ]
 # ----------------------------------------------------
 
