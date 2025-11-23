@@ -15,65 +15,65 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useUser, useClerk } from '@clerk/clerk-react'; // Import Clerk hooks
+import { useUser, useClerk } from '@clerk/clerk-react';
 
 const SettingsPage = () => {
   const { theme, toggleTheme } = useTheme();
   const { currentLanguage, setLanguage, t } = useLanguage();
   const { toast } = useToast();
   
-  // Get Real User Data from Clerk
-  const { user } = useUser();
+  // Clerk Hooks
+  const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
 
-  // Load settings from LocalStorage or default
+  // --- FIX: Safe Storage Loading ---
   const [userSettings, setUserSettings] = useState(() => {
-    const saved = localStorage.getItem('user_preferences');
-    return saved ? JSON.parse(saved) : {
+    try {
+      const saved = localStorage.getItem('user_preferences');
+      // Check if saved is valid JSON and not "undefined" string
+      if (saved && saved !== "undefined") {
+        return JSON.parse(saved);
+      }
+    } catch (e) {
+      console.warn("Failed to parse user settings, resetting to default.");
+      // If error, clear bad data
+      localStorage.removeItem('user_preferences');
+    }
+    // Default fallback
+    return {
       notifications: { email: true, push: false, reminders: true },
       privacy: { shareData: false, analytics: true },
       phone: ''
     };
   });
 
-  // Sync Clerk Name/Email to State (only for display/editing name)
   const [profileName, setProfileName] = useState('');
 
+  // Sync User Data when loaded
   useEffect(() => {
-    if (user) {
+    if (isLoaded && user) {
       setProfileName(user.fullName || '');
     }
-  }, [user]);
+  }, [isLoaded, user]);
 
-  // Save Preferences to LocalStorage whenever they change
+  // Persist Settings
   useEffect(() => {
     localStorage.setItem('user_preferences', JSON.stringify(userSettings));
   }, [userSettings]);
 
-  // Language options (Assuming your context provides these, or we mock them)
   const languageOptions = [
     { value: 'en', label: 'English' },
     { value: 'es', label: 'Español' },
     { value: 'fr', label: 'Français' },
-    { value: 'hi', label: 'Hindi' } // Added Hindi relevant for India context
+    { value: 'hi', label: 'Hindi' }
   ];
 
-  const handleSaveProfile = async () => {
-    try {
-      // In a real app, you'd update Clerk user metadata here
-      // await user?.update({ firstName: ... }) 
-      
-      toast({
-        title: "Profile Updated",
-        description: "Your preferences have been saved locally.",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update profile.",
-        variant: "destructive"
-      });
-    }
+  const handleSaveProfile = () => {
+    // In a real app, send update to Clerk here
+    toast({
+      title: "Profile Saved",
+      description: "Your preferences have been updated locally.",
+    });
   };
 
   const handleNotificationChange = (key: string, value: boolean) => {
@@ -91,20 +91,24 @@ const SettingsPage = () => {
   };
 
   const handleExportData = () => {
-    // Create a JSON file of local history
-    const history = localStorage.getItem('clarity_scan_history');
-    const blob = new Blob([history || '{}'], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = "my_health_data.json";
-    document.body.appendChild(link);
-    link.click();
-    
-    toast({
-      title: "Export Successful",
-      description: "Your scan history has been downloaded.",
-    });
+    try {
+      const history = localStorage.getItem('clarity_scan_history');
+      const blob = new Blob([history || '[]'], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = "my_health_data.json";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast({
+        title: "Export Successful",
+        description: "Your data has been downloaded.",
+      });
+    } catch (e) {
+      toast({ title: "Export Failed", description: "Could not generate export file.", variant: "destructive" });
+    }
   };
 
   const handleDeleteAllData = () => {
@@ -113,13 +117,17 @@ const SettingsPage = () => {
       localStorage.removeItem('user_preferences');
       toast({
         title: "Data Deleted",
-        description: "All local data has been wiped.",
+        description: "All local data has been wiped. Refreshing...",
         variant: "destructive",
       });
-      // Refresh to reset state
-      window.location.reload();
+      setTimeout(() => window.location.reload(), 1000);
     }
   };
+
+  // Prevent rendering if Clerk isn't ready (prevents null crashes)
+  if (!isLoaded) {
+    return <div className="flex h-[50vh] items-center justify-center text-muted-foreground">Loading settings...</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -142,8 +150,10 @@ const SettingsPage = () => {
         {/* Theme & Language */}
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2"><Monitor className="h-5 w-5" /> Appearance</CardTitle>
-            <CardDescription>Customize how the app looks and feels.</CardDescription>
+            <CardTitle className="flex items-center gap-2">
+              <Globe className="h-5 w-5" /> Appearance
+            </CardTitle>
+            <CardDescription>Customize display settings.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -179,7 +189,7 @@ const SettingsPage = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2"><User className="h-5 w-5" /> Personal Information</CardTitle>
-            <CardDescription>Managed via your Clerk secure account.</CardDescription>
+            <CardDescription>Managed via your secure account.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -192,7 +202,7 @@ const SettingsPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address (Read Only)</Label>
+                <Label htmlFor="email">Email Address</Label>
                 <Input 
                   id="email" 
                   value={user?.primaryEmailAddress?.emailAddress || ''} 
@@ -201,11 +211,11 @@ const SettingsPage = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="phone">Phone Number (Optional)</Label>
+                <Label htmlFor="phone">Phone Number</Label>
                 <Input 
                   id="phone" 
-                  placeholder="+91 98765 43210"
-                  value={userSettings.phone}
+                  placeholder="+1 234 567 890"
+                  value={userSettings.phone || ''}
                   onChange={(e) => setUserSettings((prev: any) => ({ ...prev, phone: e.target.value }))} 
                 />
               </div>
@@ -224,22 +234,26 @@ const SettingsPage = () => {
             <CardTitle className="flex items-center gap-2"><Bell className="h-5 w-5" /> Notifications</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {[
-              { id: 'email', label: 'Email Notifications', desc: 'Receive results via email' },
-              { id: 'push', label: 'Push Notifications', desc: 'Browser alerts for analysis' },
-              { id: 'reminders', label: 'Health Reminders', desc: 'Monthly check-up reminders' }
-            ].map((item) => (
-              <div key={item.id} className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label className="text-base">{item.label}</Label>
-                  <div className="text-sm text-muted-foreground">{item.desc}</div>
+                  <Label className="text-base">Email Notifications</Label>
+                  <div className="text-sm text-muted-foreground">Receive updates via email</div>
                 </div>
                 <Switch 
-                  checked={userSettings.notifications[item.id as keyof typeof userSettings.notifications]} 
-                  onCheckedChange={(c) => handleNotificationChange(item.id, c)} 
+                  checked={userSettings.notifications?.email ?? true} 
+                  onCheckedChange={(c) => handleNotificationChange('email', c)} 
                 />
-              </div>
-            ))}
+            </div>
+            <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-base">Health Reminders</Label>
+                  <div className="text-sm text-muted-foreground">Periodic check-up reminders</div>
+                </div>
+                <Switch 
+                  checked={userSettings.notifications?.reminders ?? true} 
+                  onCheckedChange={(c) => handleNotificationChange('reminders', c)} 
+                />
+            </div>
           </CardContent>
         </Card>
 
@@ -255,7 +269,7 @@ const SettingsPage = () => {
                 <div className="text-sm text-muted-foreground">Allow anonymized data for research</div>
               </div>
               <Switch 
-                checked={userSettings.privacy.shareData} 
+                checked={userSettings.privacy?.shareData ?? false} 
                 onCheckedChange={(c) => handlePrivacyChange('shareData', c)} 
               />
             </div>
@@ -274,7 +288,7 @@ const SettingsPage = () => {
         </Card>
 
         {/* Account Actions */}
-        <div className="flex justify-center pt-4">
+        <div className="flex justify-center pt-4 pb-8">
             <Button variant="ghost" className="text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => signOut()}>
                 <LogOut className="h-4 w-4 mr-2" /> Sign Out
             </Button>
