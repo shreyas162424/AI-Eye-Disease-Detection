@@ -387,7 +387,9 @@ def predict():
         inp_tensor = pil_to_tensor_for_model(pil_resized)
 
         # run forward (classification + segmentation) under no_grad
-        with torch.no_grad():
+        # with torch.no_grad():
+         # run forward (classification + segmentation) using inference_mode (uses less RAM)
+        with torch.inference_mode():
             out = _model(inp_tensor)
             # Handle potential output formats
             if isinstance(out, (list, tuple)):
