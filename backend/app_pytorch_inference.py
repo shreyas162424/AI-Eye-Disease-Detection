@@ -48,7 +48,7 @@ import pandas as pd
 # Fix: Use the script's own location to find the file reliably
 MODEL_PATH = Path(__file__).parent / "models" / "eye_model_lite.pth"
 LOG_DB_PATH = "sqlite:///predictions_flask.db"
-IMG_SIZE = 300
+IMG_SIZE = 224
 MAX_UPLOAD_MB = 12 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
