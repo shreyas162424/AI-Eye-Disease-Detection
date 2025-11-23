@@ -64,7 +64,7 @@ CORS_ORIGINS = [
 app = Flask(__name__)
 
 # FIX 2: Correct syntax using the 'origins' key and the variable defined above
-CORS(app, resources={r"/*": {"origins": CORS_ORIGINS}})
+CORS(app)
 
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_MB * 1024 * 1024
 
@@ -331,6 +331,10 @@ def load_model():
         print("GradCAM not available; continuing without CAM.")
 
 # ---------------- Routes ----------------
+@app.route("/", methods=["GET", "HEAD"])
+def index():
+    return "Backend is running!"
+
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok", "device": DEVICE})
