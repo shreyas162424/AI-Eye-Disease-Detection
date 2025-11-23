@@ -45,8 +45,8 @@ import pandas as pd
 
 # ---------------- CONFIG - edit these ----------------
 # FIX 1: Use a relative path. Assumes .pth is in the same folder as this script.
-MODEL_PATH = Path("eye_model_lite.pth") 
-
+# Fix: Use the script's own location to find the file reliably
+MODEL_PATH = Path(__file__).parent / "eye_model_lite.pth"
 LOG_DB_PATH = "sqlite:///predictions_flask.db"
 IMG_SIZE = 300
 MAX_UPLOAD_MB = 12 
