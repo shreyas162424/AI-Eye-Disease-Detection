@@ -1,6 +1,6 @@
-// src/components/Dashboard.tsx
 import React, { useMemo, useState } from "react";
-import { loadScans, clearScans } from "../lib/scanStorage";
+import { getScans, clearScans, ScanRecord } from "../lib/scanStorage"; // CHANGED: loadScans -> getScans
+import { useUser } from "@clerk/clerk-react"; // ADDED: Clerk hook
 import {
   AreaChart,
   Area,
@@ -14,15 +14,6 @@ import {
   Cell,
   Legend,
 } from "recharts";
-
-type Scan = {
-  id: string;
-  timestamp: string;
-  imageDataUrl?: string;
-  thumbDataUrl?: string;
-  prediction: string;
-  probability: number;
-};
 
 const COLORS = ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#A78BFA"];
 
@@ -39,8 +30,8 @@ function formatDate(ts?: string) {
 function ImageModal({ src, alt, onClose }: { src: string | null; alt?: string; onClose: () => void }) {
   if (!src) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-      <div className="bg-white rounded shadow-lg max-w-3xl w-full mx-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" onClick={onClose}>
+      <div className="bg-white rounded shadow-lg max-w-3xl w-full mx-4" onClick={e => e.stopPropagation()}>
         <div className="flex justify-end p-2">
           <button onClick={onClose} className="text-gray-600 hover:text-black px-3 py-1">Close</button>
         </div>
@@ -52,14 +43,16 @@ function ImageModal({ src, alt, onClose }: { src: string | null; alt?: string; o
   );
 }
 
-export default function Dashboard(): JSX.Element {
-  const scans = (loadScans() as Scan[]) || [];
+export const Dashboard = (): JSX.Element => {
+  const { user } = useUser(); // Get current user
+  // Only load scans if user is logged in, otherwise empty array
+  const scans = user ? getScans(user.id) : []; 
 
-  // state MUST be inside the component
   const [modalSrc, setModalSrc] = useState<string | null>(null);
 
   const total = scans.length;
-  const avgConfidence = total === 0 ? 0 : (scans.reduce((s, r) => s + r.probability, 0) / total) * 100;
+  // Parse probability safely (it might be string or number)
+  const avgConfidence = total === 0 ? 0 : (scans.reduce((s, r) => s + Number(r.probability), 0) / total) * 100;
   const latestDate = scans.length ? scans[0].timestamp : null;
 
   const lineData = useMemo(() => {
@@ -69,13 +62,21 @@ export default function Dashboard(): JSX.Element {
       .reverse()
       .map((s) => ({
         date: new Date(s.timestamp).toLocaleDateString(),
-        score: Number((s.probability * 100).toFixed(1)),
+        score: Number((Number(s.probability) * 100).toFixed(1)),
       }));
   }, [scans]);
 
   const counts: Record<string, number> = {};
-  scans.forEach((s) => (counts[s.prediction] = (counts[s.prediction] || 0) + 1));
-  const pieData = Object.keys(counts).map((k, i) => ({ name: k.replace(/_/g, " "), value: counts[k], color: COLORS[i % COLORS.length] }));
+  scans.forEach((s) => {
+      const pred = s.prediction || "Unknown";
+      counts[pred] = (counts[pred] || 0) + 1;
+  });
+  
+  const pieData = Object.keys(counts).map((k, i) => ({ 
+      name: k.replace(/_/g, " "), 
+      value: counts[k], 
+      color: COLORS[i % COLORS.length] 
+  }));
 
   const exportCsv = () => {
     if (!scans.length) {
@@ -86,7 +87,7 @@ export default function Dashboard(): JSX.Element {
       id: s.id,
       timestamp: s.timestamp,
       prediction: s.prediction,
-      confidence: (s.probability * 100).toFixed(2),
+      confidence: (Number(s.probability) * 100).toFixed(2),
     }));
     const header = Object.keys(rows[0]).join(",");
     const csv = [header, ...rows.map((r) => Object.values(r).map((v) => `"${String(v).replace(/"/g, '""')}"`).join(","))].join("\n");
@@ -101,50 +102,51 @@ export default function Dashboard(): JSX.Element {
 
   const handleClear = () => {
     if (!confirm("Clear all scan history? This cannot be undone.")) return;
-    clearScans();
-    location.reload();
+    if (user) {
+        clearScans(user.id);
+        window.location.reload();
+    }
   };
+
+  if (!user) return <div className="p-8 text-center text-slate-500">Please sign in to view dashboard.</div>;
 
   return (
     <div className="space-y-6 px-6 pb-8">
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-semibold text-white">Scan History & Trends</h3>
-          <p className="text-sm text-slate-300">Overview of recent scans and risk trends</p>
+          <h3 className="text-2xl font-semibold text-slate-800">Scan History & Trends</h3>
+          <p className="text-sm text-slate-500">Overview of recent scans and risk trends</p>
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="text-center text-slate-200">
+          <div className="text-center">
             <div className="text-sm text-slate-400">Total scans</div>
-            <div className="text-xl font-bold">{total}</div>
+            <div className="text-xl font-bold text-slate-700">{total}</div>
           </div>
 
-          <div className="text-center text-slate-200">
-            <div className="text-sm text-slate-400">Average confidence</div>
-            <div className="text-xl font-bold">{avgConfidence.toFixed(1)}%</div>
-          </div>
-
-          <div className="text-center text-slate-200">
-            <div className="text-sm text-slate-400">Latest scan</div>
-            <div className="text-sm">{latestDate ? formatDate(latestDate) : "-"}</div>
+          <div className="text-center">
+            <div className="text-sm text-slate-400">Avg. Confidence</div>
+            <div className="text-xl font-bold text-blue-600">{avgConfidence.toFixed(1)}%</div>
           </div>
 
           <div className="flex gap-2">
-            <button onClick={exportCsv} className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700">Export CSV</button>
-            <button onClick={handleClear} className="px-3 py-1 bg-rose-600 text-white rounded hover:bg-rose-700">Clear History</button>
+            <button onClick={exportCsv} className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">Export CSV</button>
+            <button onClick={handleClear} className="px-3 py-1 bg-rose-600 text-white rounded hover:bg-rose-700 text-sm">Clear History</button>
           </div>
         </div>
       </div>
 
       {scans.length === 0 ? (
-        <div className="bg-white/5 rounded p-6 text-slate-300">No scans yet.</div>
+        <div className="bg-slate-50 border border-dashed border-slate-200 rounded p-12 text-center text-slate-400">
+            No scans recorded yet. Upload an image to get started.
+        </div>
       ) : (
         <>
           {/* Charts row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 bg-white rounded shadow p-4">
-              <h4 className="text-md font-medium mb-2 text-slate-800">Risk trend (last scans)</h4>
+            <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+              <h4 className="text-md font-medium mb-4 text-slate-800">Confidence Trend</h4>
               <div style={{ height: 300 }}>
                 <ResponsiveContainer>
                   <AreaChart data={lineData} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
@@ -154,125 +156,58 @@ export default function Dashboard(): JSX.Element {
                         <stop offset="95%" stopColor="#6366F1" stopOpacity={0.05} />
                       </linearGradient>
                     </defs>
-
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e6edf3" opacity={0.35} />
-                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#475569" }} axisLine={false} />
-                    <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fill: "#475569" }} axisLine={false} />
-                    <Tooltip formatter={(value: any) => `${value}%`} contentStyle={{ background: "#0b1220", border: "none", color: "#fff" }} />
-                    <Area type="monotone" dataKey="score" stroke="#6366F1" fill="url(#colorScore)" dot={{ r: 4 }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tick={{ fill: "#64748b" }} axisLine={false} tickLine={false} />
+                    <Tooltip formatter={(value: any) => [`${value}%`, "Confidence"]} contentStyle={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }} itemStyle={{ color: "#1e293b" }} />
+                    <Area type="monotone" dataKey="score" stroke="#6366F1" strokeWidth={2} fill="url(#colorScore)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            <div className="bg-white rounded shadow p-4">
-              <h4 className="text-md font-medium mb-2 text-slate-800">Condition distribution</h4>
+            <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+              <h4 className="text-md font-medium mb-4 text-slate-800">Diagnoses</h4>
               <div style={{ height: 260 }}>
                 <ResponsiveContainer>
                   <PieChart>
-                    <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={80} innerRadius={48} paddingAngle={6} label>
+                    <Pie data={pieData} dataKey="value" nameKey="name" outerRadius={80} innerRadius={50} paddingAngle={4}>
                       {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
                     </Pie>
-                    <Legend verticalAlign="bottom" layout="horizontal" wrapperStyle={{ paddingTop: 8, fontSize: 12 }} />
+                    <Legend verticalAlign="bottom" height={36}/>
+                    <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
-              </div>
-
-              <div className="mt-3 space-y-2 text-sm">
-                {pieData.map((p) => (
-                  <div key={p.name} className="flex items-center justify-between text-slate-700">
-                    <div className="flex items-center gap-3">
-                      <span style={{ width: 12, height: 12, background: p.color }} className="inline-block rounded" />
-                      <span>{p.name}</span>
-                    </div>
-                    <div className="font-medium">{p.value}</div>
-                  </div>
-                ))}
               </div>
             </div>
           </div>
 
           {/* Recent scans */}
-          <div className="bg-white rounded shadow p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h4 className="text-lg font-medium text-slate-800">Recent scans</h4>
-              <div className="text-sm text-slate-500">{total} total</div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-4">
-              {scans.slice(0, 8).map((s) => (
-                <div
-                  key={s.id}
-                  className="flex items-center gap-4 border rounded-lg p-3 hover:shadow-lg transition-shadow bg-white"
-                  aria-label={`Scan ${s.id}`}
-                >
-                  {/* THUMBNAIL */}
-                  <div className="w-20 h-16 flex-shrink-0 rounded-md overflow-hidden border bg-gray-50 flex items-center justify-center">
-                    {s.thumbDataUrl || s.imageDataUrl ? (
-                      <img
-                        src={s.thumbDataUrl ?? s.imageDataUrl!}
-                        alt={`thumb-${s.id}`}
-                        className="object-cover w-full h-full"
-                      />
+          <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+            <h4 className="text-lg font-medium text-slate-800 mb-4">Recent Activity</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {scans.slice(0, 6).map((s) => (
+                <div key={s.id} className="flex items-center gap-4 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors">
+                  {/* Thumbnail */}
+                  <div className="w-16 h-16 flex-shrink-0 rounded bg-slate-200 overflow-hidden cursor-pointer" onClick={() => setModalSrc(s.imageDataUrl || null)}>
+                    {s.imageDataUrl ? (
+                      <img src={s.imageDataUrl} alt="scan" className="w-full h-full object-cover hover:scale-110 transition-transform" />
                     ) : (
-                      <div className="text-xs text-slate-400">No image</div>
+                      <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">No IMG</div>
                     )}
                   </div>
 
-                  {/* MAIN TEXT */}
+                  {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="font-semibold text-slate-900 truncate">{s.prediction.replace(/_/g, " ")}</div>
-                      </div>
-
-                      {/* CONFIDENCE */}
-                      <div className="ml-2">
-                        <div className="text-sm font-semibold inline-flex items-center px-3 py-1 rounded-full bg-gradient-to-r from-green-100 to-green-50 text-green-800 border border-green-200">
-                          {(s.probability * 100).toFixed(1)}%
+                    <div className="flex justify-between items-start">
+                        <div>
+                            <p className="font-medium text-slate-900 capitalize">{s.prediction.replace(/_/g, " ")}</p>
+                            <p className="text-xs text-slate-500">{formatDate(s.timestamp)}</p>
                         </div>
-                      </div>
+                        <span className="px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold">
+                            {(Number(s.probability) * 100).toFixed(0)}%
+                        </span>
                     </div>
-
-                    {/* Date/time */}
-                    <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-                      <svg className="w-4 h-4 text-slate-400 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3M3 11h18M5 21h14a2 2 0 0 0 2-2V7H3v12a2 2 0 0 0 2 2z"></path>
-                      </svg>
-                      <div className="flex flex-col">
-                        <span className="text-xs text-slate-600">{formatDate(s.timestamp)}</span>
-                        <span className="text-xs text-slate-400">Scan ID: <span className="text-slate-500">{s.id.slice(0, 8)}</span></span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* ACTIONS */}
-                  <div className="flex flex-col items-end gap-2">
-                    <button
-                      onClick={() => {
-                        navigator.clipboard.writeText(JSON.stringify(s));
-                        const t = document.createElement("div");
-                        t.innerText = "Copied JSON";
-                        t.className = "fixed bottom-6 right-6 bg-slate-800 text-white px-3 py-2 rounded shadow";
-                        document.body.appendChild(t);
-                        setTimeout(() => t.remove(), 1500);
-                      }}
-                      className="text-xs px-3 py-1 border rounded text-slate-700 hover:bg-slate-50"
-                    >
-                      Copy
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        const url = s.imageDataUrl ?? s.thumbDataUrl;
-                        if (!url) { alert("No image available."); return; }
-                        const safeUrl = url.startsWith("data:") ? url : url.startsWith("http") ? url : `data:image/png;base64,${url}`;
-                        setModalSrc(safeUrl);
-                      }}
-                      className="text-xs px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700"
-                    >
-                      View
-                    </button>
                   </div>
                 </div>
               ))}
@@ -280,8 +215,10 @@ export default function Dashboard(): JSX.Element {
           </div>
         </>
       )}
-      {/* <-- Render modal once at the bottom */}
+      
       {modalSrc && <ImageModal src={modalSrc} alt="Scan image" onClose={() => setModalSrc(null)} />}
     </div>
   );
-}
+};
+
+export default Dashboard;
