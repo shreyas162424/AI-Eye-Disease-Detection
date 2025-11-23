@@ -1,13 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Calendar,
-  Eye,
-  Download,
-  Share2,
-  Search,
-  AlertCircle,
-  CheckCircle,
+  Calendar, Eye, Download, Share2, Search, AlertCircle, CheckCircle, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -16,13 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { getHistory, HistoryItem } from '@/lib/api';
-import jsPDF from "jspdf";
-import "jspdf-autotable";
+import { useUser } from "@clerk/clerk-react"; // Clerk User
+import { getScans, clearScans, ScanRecord } from '@/lib/scanStorage'; // Local Storage
+import { generateReport } from '@/lib/generatereport'; // Your robust PDF generator
 
 const HistoryPage: React.FC = () => {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [filteredHistory, setFilteredHistory] = useState<HistoryItem[]>([]);
+  const { user } = useUser();
+  const [history, setHistory] = useState<ScanRecord[]>([]);
+  const [filteredHistory, setFilteredHistory] = useState<ScanRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDisease, setFilterDisease] = useState('all');
@@ -30,178 +25,88 @@ const HistoryPage: React.FC = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
 
-  useEffect(() => { loadHistory(); }, []);
+  // Load history when user loads
+  useEffect(() => { 
+    if (user) {
+      const data = getScans(user.id);
+      setHistory(data);
+      setLoading(false);
+    }
+  }, [user]);
+
   useEffect(() => { filterAndSortHistory(); }, [history, searchTerm, filterDisease, sortOrder]);
 
-  const getTimestamp = (item: any) => item.timestamp || item.created_at || item.time || null;
-
-  const safeParseProbabilities = (item: any): Record<string, number> | null => {
-    try {
-      const p = item.probabilities;
-      if (p == null) return null;
-      if (typeof p === 'object') return p as Record<string, number>;
-      if (typeof p === 'string') {
-        const trimmed = p.trim();
-        if (!trimmed) return null;
-        try {
-          return JSON.parse(trimmed);
-        } catch {
-          return null;
-        }
-      }
-      try {
-        return JSON.parse(String(p));
-      } catch {
-        return null;
-      }
-    } catch (err) {
-      console.warn("safeParseProbabilities failed for item:", item, err);
-      return null;
-    }
-  };
-
-  const normalizeDisease = (s?: string|null) => (s ? String(s).toLowerCase() : '');
-
-  const loadHistory = async () => {
-    try {
-      const data = await getHistory();
-      const arr = Array.isArray(data) ? data : [data];
-      setHistory(arr);
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to load history.",
-        variant: "destructive",
-      });
-    } finally { setLoading(false); }
-  };
+  const normalizeDisease = (s?: string | null) => (s ? String(s).toLowerCase() : '');
 
   const filterAndSortHistory = () => {
     let filtered = history.filter(item => {
-      const disease = normalizeDisease(item.predicted_disease);
+      const disease = normalizeDisease(item.prediction);
       const matchesSearch =
-        (item.predicted_disease || '').toString().toLowerCase().includes(searchTerm.toLowerCase())
-        || (getTimestamp(item) || '').toString().toLowerCase().includes(searchTerm.toLowerCase());
+        (item.prediction || '').toString().toLowerCase().includes(searchTerm.toLowerCase())
+        || (item.timestamp || '').toString().toLowerCase().includes(searchTerm.toLowerCase());
       const matchesFilter = filterDisease === 'all' || disease === filterDisease;
       return matchesSearch && matchesFilter;
     });
+    
     filtered.sort((a, b) => {
-      const dateA = new Date(getTimestamp(a) || 0).getTime();
-      const dateB = new Date(getTimestamp(b) || 0).getTime();
+      const dateA = new Date(a.timestamp).getTime();
+      const dateB = new Date(b.timestamp).getTime();
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
     });
     setFilteredHistory(filtered);
   };
 
-  const formatDate = (dateString: string | undefined | null) => {
-    if (!dateString) return "Unknown date";
+  const handleClearHistory = () => {
+    if (confirm("Are you sure you want to delete all history? This cannot be undone.")) {
+       if (user) clearScans(user.id);
+       setHistory([]);
+       toast({ title: "History Cleared", description: "All records have been deleted." });
+    }
+  };
+
+  const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    if (isNaN(date.getTime())) return String(dateString);
-    return date.toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+    return isNaN(date.getTime()) ? "Unknown" : date.toLocaleDateString();
   };
 
-  const getDiseaseVariant = (disease: string | undefined) => {
+  const getDiseaseVariant = (disease: string) => {
     const d = normalizeDisease(disease);
-    switch(d){
-      case 'normal': return 'secondary';
-      case 'cataract': return 'outline';
-      case 'glaucoma':
-      case 'diabetic_retinopathy':
-      case 'diabetic retinopathy': return 'destructive';
-      default: return 'secondary';
-    }
+    return d === 'normal' ? 'secondary' : 'destructive';
   };
 
-  const getDiseaseIcon = (disease: string | undefined) => (normalizeDisease(disease) === 'normal' ? CheckCircle : AlertCircle);
+  const getDiseaseIcon = (disease: string) => (normalizeDisease(disease) === 'normal' ? CheckCircle : AlertCircle);
 
-  const getUniqueDiseasesFromHistory = () => {
-    const set = new Set(history.map(item => normalizeDisease(item.predicted_disease)));
-    return Array.from(set).filter(Boolean);
+  const getUniqueDiseases = () => Array.from(new Set(history.map(i => normalizeDisease(i.prediction)))).filter(Boolean);
+
+  // Statistics
+  const stats = {
+    total: history.length,
+    normal: history.filter(i => normalizeDisease(i.prediction) === 'normal').length,
+    abnormal: history.filter(i => normalizeDisease(i.prediction) !== 'normal').length,
+    avgConf: history.length > 0 
+      ? (history.reduce((acc, i) => acc + Number(i.probability), 0) / history.length * 100).toFixed(1) 
+      : '0'
   };
 
-  const getStats = () => {
-    const totalScans = history.length;
-    const normalScans = history.filter(item => normalizeDisease(item.predicted_disease) === 'normal').length;
-    const abnormalScans = totalScans - normalScans;
-    const avgConfidence = history.length > 0
-      ? (history.reduce((sum, item) => sum + (Number(item.confidence) || 0), 0)/history.length*100).toFixed(1)
-      : '0';
-    return { totalScans, normalScans, abnormalScans, avgConfidence };
-  };
-
-  const stats = getStats();
-
-  const downloadPDF = () => {
-    if (filteredHistory.length === 0) {
-      return toast({ title: "No data to export", variant: "destructive" });
-    }
-    const doc = new jsPDF();
-    const title = filterDisease === 'all'
-      ? "Eye Scan History - All Conditions"
-      : `Eye Scan History - ${filterDisease.replace(/_/g,' ').replace(/\b\w/g, l => l.toUpperCase())}`;
-
-    doc.text(title, 14, 16);
-
-    const tableColumn = ["ID", "Disease", "Confidence", "Date"];
-    const tableRows = filteredHistory.map(item => {
-      const id = (item.id ?? item.filename ?? '-').toString();
-      const disease = (item.predicted_disease ?? '').replace(/_/g,' ');
-      const conf = (((Number(item.confidence) || 0) * 100)).toFixed(1) + "%";
-      const date = formatDate(getTimestamp(item));
-      return [id, disease, conf, date];
-    });
-
-    (doc as any).autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 24,
-    });
-    doc.save(`${title.replace(/\s+/g, '_').toLowerCase()}.pdf`);
-  };
-
-  const downloadPDFForScan = (item: HistoryItem) => {
-    const doc = new jsPDF();
-    const diseaseLabel = (item.predicted_disease ?? '').replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase());
-    const title = `Eye Scan Result - ${diseaseLabel}`;
-    doc.text(title, 14, 16);
-
-    const parsed = safeParseProbabilities(item) || {};
-    const tableRows = Object.entries(parsed).map(([d,p]) => [d.replace(/_/g,' '), (Number(p) * 100).toFixed(1) + "%"]);
-
-    (doc as any).autoTable({
-      head: [["Disease","Confidence"]],
-      body: tableRows,
-      startY: 24,
-    });
-
-    doc.text(`Scan Date: ${formatDate(getTimestamp(item))}`, 14, (tableRows.length + 6) * 8);
-    doc.save(`${title.replace(/\s+/g,'_').toLowerCase()}.pdf`);
-  };
-
-  const shareScan = (item: HistoryItem) => {
-    const parsed = safeParseProbabilities(item) || {};
-    let shareText = `Eye Scan Result:\nPredicted Disease: ${(item.predicted_disease ?? '').replace(/_/g,' ')}\nConfidence: ${((Number(item.confidence)||0)*100).toFixed(1)}%\nProbabilities:\n`;
-    Object.entries(parsed).forEach(([d,prob]) => {
-      shareText += `- ${d.replace(/_/g,' ')}: ${(Number(prob)*100).toFixed(1)}%\n`;
-    });
-    shareText += `Scan Date: ${formatDate(getTimestamp(item))}`;
-
-    if ((navigator as any).share) {
-      (navigator as any).share({ title: 'Eye Scan Result', text: shareText }).catch(console.error);
-    } else {
-      navigator.clipboard.writeText(shareText).then(() => {
-        toast({ title: "Copied to clipboard", description: "Scan details copied successfully." });
-      }).catch(() => {
-        toast({ title: "Copy failed", variant: "destructive" });
-      });
-    }
+  // Handlers
+  const handleDownloadPDF = (item: ScanRecord) => {
+    // Convert ScanRecord back to PredictionResult format for the generator
+    const mockResult = {
+      predicted_disease: item.prediction,
+      confidence: Number(item.probability),
+      probabilities: {}, // Stored history doesn't have full probs, which is fine
+      heatmap_png_base64: item.gradcamDataUrl?.split(',')[1], 
+      mask_png_base64: item.maskDataUrl?.split(',')[1]
+    };
+    generateReport(mockResult, user?.fullName || "Patient");
+    toast({ title: "Report Downloaded", description: "PDF generated successfully." });
   };
 
   if(loading) return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl flex items-center justify-center min-h-96">
+    <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[50vh]">
       <div className="text-center space-y-4">
-        <Eye className="h-12 w-12 animate-pulse text-primary mx-auto"/>
-        <p className="text-muted-foreground">Loading your scan history...</p>
+        <Eye className="h-12 w-12 animate-pulse text-blue-600 mx-auto"/>
+        <p className="text-gray-500">Loading your secure history...</p>
       </div>
     </div>
   );
@@ -209,33 +114,51 @@ const HistoryPage: React.FC = () => {
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.6}} className="space-y-8">
-        <div className="text-center space-y-4">
-          <h1 className="text-3xl md:text-4xl font-bold">{t('history')}</h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Track your eye health over time with detailed analysis history and trends.</p>
+        
+        {/* Header */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">{t('history') || 'Scan History'}</h1>
+            <p className="text-gray-500">Your personal record of AI analyses.</p>
+          </div>
+          {history.length > 0 && (
+            <Button variant="destructive" onClick={handleClearHistory}>
+              <Trash2 className="h-4 w-4 mr-2" /> Clear All History
+            </Button>
+          )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card><CardContent className="p-6 text-center"><div className="text-2xl font-bold text-primary">{stats.totalScans}</div><div className="text-sm text-muted-foreground">Total Scans</div></CardContent></Card>
-          <Card><CardContent className="p-6 text-center"><div className="text-2xl font-bold text-success">{stats.normalScans}</div><div className="text-sm text-muted-foreground">Normal Results</div></CardContent></Card>
-          <Card><CardContent className="p-6 text-center"><div className="text-2xl font-bold text-warning">{stats.abnormalScans}</div><div className="text-sm text-muted-foreground">Abnormal Results</div></CardContent></Card>
-          <Card><CardContent className="p-6 text-center"><div className="text-2xl font-bold text-primary">{stats.avgConfidence}%</div><div className="text-sm text-muted-foreground">Avg. Confidence</div></CardContent></Card>
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card><CardContent className="p-6 text-center"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-gray-500">Total Scans</div></CardContent></Card>
+          <Card><CardContent className="p-6 text-center"><div className="text-2xl font-bold text-green-600">{stats.normal}</div><div className="text-xs text-gray-500">Normal</div></CardContent></Card>
+          <Card><CardContent className="p-6 text-center"><div className="text-2xl font-bold text-red-600">{stats.abnormal}</div><div className="text-xs text-gray-500">Issues Found</div></CardContent></Card>
+          <Card><CardContent className="p-6 text-center"><div className="text-2xl font-bold text-blue-600">{stats.avgConf}%</div><div className="text-xs text-gray-500">Avg. Confidence</div></CardContent></Card>
         </div>
 
+        {/* Filters */}
         <Card>
-          <CardContent className="p-6 flex flex-col sm:flex-row gap-4">
+          <CardContent className="p-4 flex flex-col sm:flex-row gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search by disease or date..." value={searchTerm} onChange={(e:any)=>setSearchTerm(e.target.value)} className="pl-10"/>
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input 
+                placeholder="Search date or disease..." 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                className="pl-10"
+              />
             </div>
-            <Select value={filterDisease} onValueChange={(v)=>setFilterDisease(v)}>
-              <SelectTrigger className="w-full sm:w-48"><SelectValue placeholder="Filter by disease" /></SelectTrigger>
+            <Select value={filterDisease} onValueChange={setFilterDisease}>
+              <SelectTrigger className="w-40"><SelectValue placeholder="Filter" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Conditions</SelectItem>
-                {getUniqueDiseasesFromHistory().map(d => <SelectItem key={d} value={d}>{d.replace(/_/g,' ').replace(/\b\w/g,l=>l.toUpperCase())}</SelectItem>)}
+                <SelectItem value="all">All</SelectItem>
+                {getUniqueDiseases().map(d => (
+                  <SelectItem key={d} value={d} className="capitalize">{d.replace(/_/g, ' ')}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
-            <Select value={sortOrder} onValueChange={(v)=>setSortOrder(v as 'newest'|'oldest')}>
-              <SelectTrigger className="w-full sm:w-32"><SelectValue/></SelectTrigger>
+            <Select value={sortOrder} onValueChange={(v) => setSortOrder(v as any)}>
+              <SelectTrigger className="w-32"><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="newest">Newest</SelectItem>
                 <SelectItem value="oldest">Oldest</SelectItem>
@@ -244,71 +167,50 @@ const HistoryPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {filteredHistory.length===0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <Eye className="h-16 w-16 text-muted-foreground mx-auto mb-4"/>
-              <h3 className="text-lg font-semibold mb-2">No scan history found</h3>
-              <p className="text-muted-foreground mb-4">{history.length===0 ? "You haven't performed any eye scans yet." : "No results match your current filters."}</p>
-            </CardContent>
-          </Card>
+        {/* List */}
+        {filteredHistory.length === 0 ? (
+          <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed">
+            <p className="text-gray-500">No scans found matching your criteria.</p>
+          </div>
         ) : (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-semibold">Scan History ({filteredHistory.length} results)</h2>
-              <Button variant="outline" size="sm" onClick={downloadPDF}>
-                <Download className="h-4 w-4 mr-2"/> Export PDF
-              </Button>
-            </div>
-            <div className="space-y-4">
-              {filteredHistory.map((item,index)=>{
-                const DiseaseIcon = getDiseaseIcon(item.predicted_disease);
-                const probabilities = safeParseProbabilities(item) || {};
-                return (
-                  <motion.div key={item.id ?? item.filename ?? index} initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.4, delay:index*0.05}}>
-                    <Card className="hover:shadow-medical transition-all duration-300">
-                      <CardContent className="p-6 flex items-start justify-between">
-                        <div className="flex items-start gap-4 flex-1">
-                          <div className={`h-12 w-12 rounded-full flex items-center justify-center ${normalizeDisease(item.predicted_disease)==='normal'?'bg-success/10':'bg-warning/10'}`}>
-                            <DiseaseIcon className={`h-6 w-6 ${normalizeDisease(item.predicted_disease)==='normal'?'text-success':'text-warning'}`}/>
-                          </div>
-                          <div className="space-y-2 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <Badge variant={getDiseaseVariant(item.predicted_disease)} className="capitalize">{(item.predicted_disease ?? '').replace(/_/g,' ')}</Badge>
-                              <Badge variant="outline">{(((Number(item.confidence) || 0))*100).toFixed(1)}% confidence</Badge>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <Calendar className="h-4 w-4"/>
-                              <span>{formatDate(getTimestamp(item))}</span>
-                            </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
-                              {Object.entries(probabilities).length === 0 ? (
-                                <div className="text-xs text-muted-foreground">Probabilities: N/A</div>
-                              ) : (
-                                Object.entries(probabilities).map(([d,p])=>(
-                                  <div key={d} className="flex justify-between">
-                                    <span className="capitalize text-muted-foreground">{d.replace(/_/g,' ')}:</span>
-                                    <span className="font-medium">{(Number(p)*100).toFixed(1)}%</span>
-                                  </div>
-                                ))
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="ghost" size="sm" onClick={()=>shareScan(item)}><Share2 className="h-4 w-4"/></Button>
-                          <Button variant="outline" size="sm" onClick={() => downloadPDFForScan(item)}>
-                            <Download className="h-4 w-4 mr-2"/> Export PDF
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                );
-              })}
-            </div>
+          <div className="grid gap-4">
+            {filteredHistory.map((item) => (
+              <motion.div key={item.id} initial={{opacity:0}} animate={{opacity:1}}>
+                <Card className="hover:shadow-md transition-all">
+                  <CardContent className="p-4 flex items-center gap-4">
+                    
+                    {/* Thumbnail */}
+                    <div className="h-16 w-16 rounded-md overflow-hidden bg-gray-100 border flex-shrink-0">
+                      <img src={item.imageDataUrl} alt="Scan" className="h-full w-full object-cover" />
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Badge variant={getDiseaseVariant(item.prediction)} className="capitalize">
+                          {item.prediction.replace(/_/g, ' ')}
+                        </Badge>
+                        <span className="text-xs text-gray-400 flex items-center gap-1">
+                          <Calendar size={10} /> {formatDate(item.timestamp)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">Confidence: {(Number(item.probability)*100).toFixed(1)}%</p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => handleDownloadPDF(item)}>
+                        <Download className="h-4 w-4 text-gray-500" />
+                      </Button>
+                    </div>
+
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
         )}
+
       </motion.div>
     </div>
   );
