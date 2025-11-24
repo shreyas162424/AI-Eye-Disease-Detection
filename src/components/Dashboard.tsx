@@ -1,18 +1,8 @@
-import React, { useMemo, useState } from "react";
-import { getScans, clearScans, ScanRecord } from "../lib/scanStorage"; // CHANGED: loadScans -> getScans
-import { useUser } from "@clerk/clerk-react"; // ADDED: Clerk hook
+import React, { useMemo, useState, useEffect } from "react";
+import { getScans, clearScans, ScanRecord } from "../lib/scanStorage"; 
+import { useUser } from "@clerk/clerk-react"; 
 import {
-  AreaChart,
-  Area,
-  XAxis,
-  YAxis,
-  Tooltip,
-  CartesianGrid,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
+  AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Legend,
 } from "recharts";
 
 const COLORS = ["#6366F1", "#10B981", "#F59E0B", "#EF4444", "#06B6D4", "#A78BFA"];
@@ -26,7 +16,6 @@ function formatDate(ts?: string) {
   }
 }
 
-// Inline ImageModal component
 function ImageModal({ src, alt, onClose }: { src: string | null; alt?: string; onClose: () => void }) {
   if (!src) return null;
   return (
@@ -44,14 +33,19 @@ function ImageModal({ src, alt, onClose }: { src: string | null; alt?: string; o
 }
 
 export const Dashboard = (): JSX.Element => {
-  const { user } = useUser(); // Get current user
-  // Only load scans if user is logged in, otherwise empty array
-  const scans = user ? getScans(user.id) : []; 
-
+  const { user, isLoaded } = useUser(); 
+  const [scans, setScans] = useState<ScanRecord[]>([]);
   const [modalSrc, setModalSrc] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (isLoaded) {
+      // Use "guest" if user is not logged in
+      const userId = user ? user.id : "guest";
+      setScans(getScans(userId));
+    }
+  }, [user, isLoaded]);
+
   const total = scans.length;
-  // Parse probability safely (it might be string or number)
   const avgConfidence = total === 0 ? 0 : (scans.reduce((s, r) => s + Number(r.probability), 0) / total) * 100;
   const latestDate = scans.length ? scans[0].timestamp : null;
 
@@ -102,17 +96,13 @@ export const Dashboard = (): JSX.Element => {
 
   const handleClear = () => {
     if (!confirm("Clear all scan history? This cannot be undone.")) return;
-    if (user) {
-        clearScans(user.id);
-        window.location.reload();
-    }
+    const userId = user ? user.id : "guest";
+    clearScans(userId);
+    window.location.reload();
   };
-
-  if (!user) return <div className="p-8 text-center text-slate-500">Please sign in to view dashboard.</div>;
 
   return (
     <div className="space-y-6 px-6 pb-8">
-      {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div>
           <h3 className="text-2xl font-semibold text-slate-800">Scan History & Trends</h3>
@@ -124,12 +114,10 @@ export const Dashboard = (): JSX.Element => {
             <div className="text-sm text-slate-400">Total scans</div>
             <div className="text-xl font-bold text-slate-700">{total}</div>
           </div>
-
           <div className="text-center">
             <div className="text-sm text-slate-400">Avg. Confidence</div>
             <div className="text-xl font-bold text-blue-600">{avgConfidence.toFixed(1)}%</div>
           </div>
-
           <div className="flex gap-2">
             <button onClick={exportCsv} className="px-3 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">Export CSV</button>
             <button onClick={handleClear} className="px-3 py-1 bg-rose-600 text-white rounded hover:bg-rose-700 text-sm">Clear History</button>
@@ -143,7 +131,6 @@ export const Dashboard = (): JSX.Element => {
         </div>
       ) : (
         <>
-          {/* Charts row */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-100 p-6">
               <h4 className="text-md font-medium mb-4 text-slate-800">Confidence Trend</h4>
@@ -165,7 +152,6 @@ export const Dashboard = (): JSX.Element => {
                 </ResponsiveContainer>
               </div>
             </div>
-
             <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
               <h4 className="text-md font-medium mb-4 text-slate-800">Diagnoses</h4>
               <div style={{ height: 260 }}>
@@ -182,13 +168,11 @@ export const Dashboard = (): JSX.Element => {
             </div>
           </div>
 
-          {/* Recent scans */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
             <h4 className="text-lg font-medium text-slate-800 mb-4">Recent Activity</h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {scans.slice(0, 6).map((s) => (
                 <div key={s.id} className="flex items-center gap-4 p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors">
-                  {/* Thumbnail */}
                   <div className="w-16 h-16 flex-shrink-0 rounded bg-slate-200 overflow-hidden cursor-pointer" onClick={() => setModalSrc(s.imageDataUrl || null)}>
                     {s.imageDataUrl ? (
                       <img src={s.imageDataUrl} alt="scan" className="w-full h-full object-cover hover:scale-110 transition-transform" />
@@ -196,8 +180,6 @@ export const Dashboard = (): JSX.Element => {
                       <div className="w-full h-full flex items-center justify-center text-xs text-slate-400">No IMG</div>
                     )}
                   </div>
-
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
                         <div>
