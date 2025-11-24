@@ -1,198 +1,141 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Eye, Upload, BarChart3, Shield, Zap, Globe } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useLanguage } from '@/contexts/LanguageContext';
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Upload, Activity, Shield, Zap, ArrowRight, PlayCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Home = () => {
+  const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const features = [
-    {
-      icon: Eye,
-      title: "AI-Powered Detection",
-      description: "Advanced machine learning algorithms analyze retinal images with 95%+ accuracy"
-    },
-    {
-      icon: Zap,
-      title: "Instant Results",
-      description: "Get comprehensive analysis results in seconds, not days"
-    },
-    {
-      icon: Shield,
-      title: "Medical Grade",
-      description: "Validated by ophthalmologists and tested on thousands of images"
-    },
-    {
-      icon: Globe,
-      title: "Multi-Language",
-      description: "Available in 6 languages to serve diverse communities"
-    }
-  ];
+  const handleStart = () => {
+    navigate("/upload");
+  };
+
+  const handleDemo = () => {
+    // 1. Create Fake Data for the Demo
+    const demoResult = {
+      predicted_disease: "Glaucoma",
+      confidence: 0.94,
+      probabilities: {
+        "Glaucoma": 0.94,
+        "Cataract": 0.03,
+        "Diabetic Retinopathy": 0.02,
+        "Normal": 0.01
+      },
+      // We leave masks empty for the demo to keep it simple, 
+      // or you could add base64 strings if you have them.
+      heatmap_png_base64: null, 
+      mask_png_base64: null
+    };
+
+    // 2. Navigate to Results with this data
+    navigate("/results", { 
+      state: { 
+        result: demoResult,
+        // Use a generic placeholder image for the demo
+        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Fundus_photograph_of_normal_left_eye.jpg/600px-Fundus_photograph_of_normal_left_eye.jpg"
+      } 
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="relative px-6 pt-16 pb-20 mx-auto max-w-7xl">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className="text-center space-y-8"
-        >
-          <div className="space-y-4">
-            <motion.div
-              initial={{ scale: 0.5 }}
-              animate={{ scale: 1 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="mx-auto h-20 w-20 rounded-full bg-gradient-primary flex items-center justify-center shadow-medical"
-            >
-              <Eye className="h-10 w-10 text-white" />
-            </motion.div>
+      <section className="relative pt-20 pb-32 overflow-hidden">
+        <div className="container mx-auto px-4 text-center relative z-10">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-8">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+              </span>
+              AI-Powered Retinal Screening V2.0
+            </div>
             
-            <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-foreground via-primary to-primary-soft bg-clip-text text-transparent">
-              AI Eye Disease Detection
+            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight mb-8 max-w-4xl mx-auto leading-tight">
+              Advanced Eye Care <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                Through Artificial Intelligence
+              </span>
             </h1>
             
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
-              Advanced artificial intelligence to detect cataracts, glaucoma, and diabetic retinopathy 
-              from retinal images in seconds
+            <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-12 leading-relaxed">
+              Early detection of Cataract, Glaucoma, and Diabetic Retinopathy using state-of-the-art deep learning algorithms. fast, accurate, and accessible.
             </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button variant="medical" size="lg" asChild className="text-lg px-8 py-6">
-              <Link to="/upload">
-                <Upload className="h-5 w-5 mr-2" />
-                Start Analysis
-              </Link>
-            </Button>
             
-            <Button variant="outline" size="lg" asChild className="text-lg px-8 py-6">
-              <Link to="/doctors">
-                <BarChart3 className="h-5 w-5 mr-2" />
-                View Demo Results
-              </Link>
-            </Button>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto pt-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-center p-6 rounded-lg bg-success/10 border border-success/20"
-            >
-              <div className="text-3xl font-bold text-success">95%+</div>
-              <div className="text-gray-800 dark:text-gray-200 font-medium">
-  Detection Accuracy
-</div>
-
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              className="text-center p-6 rounded-lg bg-primary/10 border border-primary/20"
-            >
-              <div className="text-3xl font-bold text-primary">&lt; 30s</div>
-              <div className="text-gray-800 dark:text-gray-200 font-medium">Analysis Time</div>
-            </motion.div>
-            
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              className="text-center p-6 rounded-lg bg-warning/10 border border-warning/20"
-            >
-              <div className="text-3xl font-bold text-warning">3</div>
-              <div className="text-gray-800 dark:text-gray-200 font-medium">Disease Types</div>
-            </motion.div>
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Features Section */}
-      <section className="px-6 py-20 mx-auto max-w-7xl">
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-          className="text-center space-y-12"
-        >
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Revolutionizing Eye Care with AI
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Our advanced system combines cutting-edge machine learning with medical expertise 
-              to provide accurate, instant eye disease detection
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={{ once: true }}
-              >
-                <Card className="h-full hover:shadow-medical transition-all duration-300 hover:-translate-y-1 border-border/50">
-                  <CardHeader className="text-center pb-4">
-                    <div className="mx-auto h-12 w-12 rounded-lg bg-gradient-primary flex items-center justify-center mb-4">
-                      <feature.icon className="h-6 w-6 text-white" />
-                    </div>
-                    <CardTitle className="text-lg">{feature.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <CardDescription className="text-center text-sm leading-relaxed">
-                      {feature.description}
-                    </CardDescription>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="px-6 py-20 mx-auto max-w-7xl">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-        >
-          <Card className="bg-gradient-primary text-white border-0 shadow-medical">
-            <CardContent className="p-12 text-center space-y-6">
-              <h3 className="text-3xl md:text-4xl font-bold">
-                Ready to Analyze Your Eye Health?
-              </h3>
-              <p className="text-xl opacity-90 max-w-2xl mx-auto">
-                Upload your retinal image and get instant AI-powered analysis. 
-                Early detection can prevent vision loss and improve treatment outcomes.
-              </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button 
-                variant="secondary" 
                 size="lg" 
-                asChild 
-                className="text-lg px-8 py-6 bg-white text-primary hover:bg-white/90"
+                onClick={handleStart}
+                className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1"
               >
-                <Link to="/upload">
-                  <Upload className="h-5 w-5 mr-2" />
-                  Upload Image Now
-                </Link>
+                <Upload className="mr-2 h-5 w-5" /> Start Diagnosis
               </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
+              
+              <Button 
+                size="lg" 
+                variant="outline" 
+                onClick={handleDemo}
+                className="h-14 px-8 text-lg rounded-full border-2 border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 transition-all"
+              >
+                <PlayCircle className="mr-2 h-5 w-5" /> View Demo Result
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+        
+        {/* Background Gradient Blob */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-blue-100/50 rounded-full blur-3xl -z-10 pointer-events-none" />
+      </section>
+
+      {/* Features Grid */}
+      <section className="py-24 bg-slate-50">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-3 gap-8">
+            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm hover:bg-white transition-colors">
+              <CardContent className="p-8">
+                <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mb-6 text-green-600">
+                  <Activity size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Multi-Disease Detection</h3>
+                <p className="text-slate-500 leading-relaxed">
+                  Capable of identifying multiple retinal conditions including Cataracts, Glaucoma, and DR with 94% accuracy.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm hover:bg-white transition-colors">
+              <CardContent className="p-8">
+                <div className="w-12 h-12 bg-blue-100 rounded-2xl flex items-center justify-center mb-6 text-blue-600">
+                  <Shield size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Medical Grade Privacy</h3>
+                <p className="text-slate-500 leading-relaxed">
+                  Your medical data is encrypted and anonymized. We adhere to strict privacy standards for patient data protection.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card className="border-none shadow-lg bg-white/50 backdrop-blur-sm hover:bg-white transition-colors">
+              <CardContent className="p-8">
+                <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center mb-6 text-amber-600">
+                  <Zap size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Instant Analysis</h3>
+                <p className="text-slate-500 leading-relaxed">
+                  Get detailed diagnostic reports in seconds. Powered by EfficientNet-B3 for rapid server-side inference.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </section>
     </div>
   );
