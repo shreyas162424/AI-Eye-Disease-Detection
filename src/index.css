@@ -3,40 +3,36 @@
 @tailwind utilities;
 
 /* -------------------------------------------------------------------------- */
-/* 1. THEME VARIABLES (Colors & Design Tokens)                                */
+/* YOUR ORIGINAL DESIGN SYSTEM (Colors, Gradients, Sidebar)                   */
 /* -------------------------------------------------------------------------- */
 
 @layer base {
   :root {
-    /* --- Light Mode Base Colors --- */
-    --background: 0 0% 100%;       /* White */
-    --foreground: 222.2 84% 4.9%;  /* Dark Text */
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
- 
+
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
- 
-    /* Medical Blue Brand Colors */
-    --primary: 211 100% 40%;       /* Deep Blue */
+
+    /* Medical blue theme */
+    --primary: 211 100% 40%;
     --primary-foreground: 0 0% 98%;
     --primary-soft: 211 100% 45%;
     --primary-glow: 211 85% 55%;
- 
+
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
- 
+
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
- 
+
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
- 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
 
-    /* Status Colors (Green/Orange for Health) */
+    /* Medical status colors */
     --success: 142 76% 36%;
     --success-foreground: 355.7 100% 97.3%;
     --success-soft: 142 69% 58%;
@@ -45,14 +41,27 @@
     --warning-foreground: 355.7 100% 97.3%;
     --warning-soft: 43 96% 56%;
 
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 211 100% 40%;
-    
-    --radius: 0.5rem;
 
-    /* --- Sidebar Variables (Required for Hamburger Menu) --- */
-    --sidebar-background: 222.2 84% 4.9%; /* Dark sidebar on mobile */
+    --radius: 0.75rem;
+
+    /* Medical gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success-soft)));
+    --gradient-warning: linear-gradient(135deg, hsl(var(--warning)), hsl(var(--warning-soft)));
+
+    /* Shadows */
+    --shadow-medical: 0 10px 30px -10px hsl(var(--primary) / 0.2);
+    --shadow-success: 0 10px 30px -10px hsl(var(--success) / 0.2);
+    --shadow-warning: 0 10px 30px -10px hsl(var(--warning) / 0.2);
+
+    /* Sidebar theme */
+    --sidebar-background: 222.2 84% 4.9%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 211 100% 40%;
     --sidebar-primary-foreground: 0 0% 98%;
@@ -61,44 +70,52 @@
     --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 211 100% 40%;
 
-    /* Effects */
-    --shadow-medical: 0 10px 30px -10px hsl(var(--primary) / 0.2);
+    /* Animation */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
- 
+
   .dark {
-    /* --- Dark Mode Base Colors --- */
-    --background: 222.2 84% 4.9%;  /* Dark Navy */
-    --foreground: 210 40% 98%;     /* White Text */
- 
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
     --card: 217.2 32.6% 17.5%;
     --card-foreground: 210 40% 98%;
- 
+
     --popover: 217.2 32.6% 17.5%;
     --popover-foreground: 210 40% 98%;
- 
-    --primary: 211 85% 55%;        /* Lighter Blue for Dark Mode */
+
+    /* Keep medical blue in dark mode */
+    --primary: 211 85% 55%;
     --primary-foreground: 222.2 84% 4.9%;
     --primary-soft: 211 80% 60%;
     --primary-glow: 211 75% 65%;
- 
+
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
- 
+
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
- 
+
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
- 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
- 
+
+    /* Adjust medical status for dark mode */
+    --success: 142 69% 58%;
+    --success-foreground: 222.2 84% 4.9%;
+    --success-soft: 142 64% 63%;
+
+    --warning: 43 96% 56%;
+    --warning-foreground: 222.2 84% 4.9%;
+    --warning-soft: 43 91% 61%;
+
+    --destructive: 0 72% 65%;
+    --destructive-foreground: 222.2 84% 4.9%;
+
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 211 85% 55%;
 
-    /* Sidebar Dark Mode */
+    /* Dark mode sidebar */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 211 85% 55%;
@@ -109,32 +126,42 @@
     --sidebar-ring: 211 85% 55%;
   }
 }
- 
+
 @layer base {
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
 }
 
 /* -------------------------------------------------------------------------- */
-/* 2. RESPONSIVE & COMPONENT STYLES                                           */
+/* MOBILE RESPONSIVENESS FIXES (ADDED)                                        */
 /* -------------------------------------------------------------------------- */
 
-/* --- Charts --- */
-/* Ensure charts have a white background even in dark mode for readability */
-.chart-surface,
+/* 1. Chart visibility */
 .chart-surface canvas {
   background: #ffffff !important;
   border-radius: 8px;
   color: initial !important;
-  padding: 1rem !important;
-  box-sizing: border-box;
 }
 
-/* --- Grad-CAM Images --- */
+/* 2. Chat Widget - Mobile Sizing */
+/* Prevents the chat from being cut off on small phone screens */
+@media (max-width: 480px) {
+  .chat-panel {
+    width: 90vw !important;
+    right: 5vw !important;
+    bottom: 80px !important; /* Moves it above bottom navigation bars */
+    height: 60vh !important;
+    max-height: 500px;
+  }
+}
+
+/* 3. Grad-CAM Image Container */
+/* Ensures images don't overflow horizontally on mobile */
 .gradcam-container {
   max-width: 480px;
   width: 100%;
@@ -154,68 +181,20 @@
   background: #fff;
 }
 
-/* --- Chat Widget --- */
-.chat-panel {
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2);
-  border-radius: 12px;
-  background: #ffffff;
-}
-
-.chat-message {
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  line-height: 1.4;
-  margin-bottom: 0.5rem;
-}
-
-.chat-message.assistant {
-  background: #f3f4f6;
-  color: #1f2937;
-  border: 1px solid #e5e7eb;
-}
-
-.chat-message.user {
-  background: #eff6ff;
-  color: #1e40af;
-  border: 1px solid #dbeafe;
-  align-self: flex-end;
-}
-
-/* --- UTILITIES --- */
-.fixed-z50 { z-index: 99999; }
-.white-card { background: #ffffff; }
-
-/* -------------------------------------------------------------------------- */
-/* 3. MOBILE RESPONSIVENESS OVERRIDES                                         */
-/* -------------------------------------------------------------------------- */
-
-/* Phones (Portrait) */
-@media (max-width: 640px) {
-  /* Force charts to fit screen width */
-  .recharts-wrapper {
-    width: 100% !important;
-  }
-  
-  /* Make Grad-CAM image responsive */
+@media (max-width: 420px) {
   .gradcam-container {
-    max-width: 100% !important;
-    height: auto !important;
+    max-width: 100%;
+    height: auto;
     aspect-ratio: 1/1;
   }
+}
 
-  /* Chat Widget adjustments for mobile */
-  .chat-panel {
-    width: 90vw !important;
-    right: 5vw !important;
-    bottom: 80px !important;
-    height: 60vh !important;
-    max-height: 500px;
-  }
-
-  /* Ensure buttons grid wraps */
-  .heatmap-actions {
-    grid-template-columns: 1fr;
-  }
+/* 4. Fix Buttons Grid on Mobile */
+.heatmap-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+@media (min-width: 640px) {
+  .heatmap-actions { grid-template-columns: 1fr 1fr; }
 }
