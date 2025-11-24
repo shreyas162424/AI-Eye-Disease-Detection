@@ -9,8 +9,8 @@ interface Translations {
 }
 
 const translations: Translations = {
-  // --- GENERAL & NAVIGATION ---
-  app_title: {
+  // --- APP SHELL ---
+  app_name: {
     en: 'Clarity Scan Aid',
     hi: 'क्लेरिटी स्कैन एड',
     kn: 'ಕ್ಲಾರಿಟಿ ಸ್ಕ್ಯಾನ್ ಏಡ್',
@@ -28,97 +28,65 @@ const translations: Translations = {
   },
   sign_in: {
     en: 'Sign In',
-    hi: 'साइन इन करें',
+    hi: 'साइन इन',
     kn: 'ಸೈನ್ ಇನ್',
     ta: 'உள்நுழைக',
     te: 'సైన్ ఇన్',
     ja: 'サインイン'
   },
-  sign_out: {
-    en: 'Sign Out',
-    hi: 'साइन आउट',
-    kn: 'ಸೈನ್ ಔಟ್',
-    ta: 'வெளியேறு',
-    te: 'సైన్ అవుట్',
-    ja: 'サインアウト'
-  },
-  access_restricted: {
-    en: 'Access Restricted',
-    hi: 'पहुँच प्रतिबंधित',
-    kn: 'ಪ್ರವೇಶ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ',
-    ta: 'அணுகல் மறுக்கப்பட்டது',
-    te: 'యాక్సెస్ నిరోధించబడింది',
-    ja: 'アクセス制限'
-  },
-  please_sign_in: {
-    en: 'Please sign in to access diagnostic tools.',
-    hi: 'नैदानिक उपकरणों का उपयोग करने के लिए कृपया साइन इन करें।',
-    kn: 'ದಯವಿಟ್ಟು ಸೈನ್ ಇನ್ ಮಾಡಿ.',
-    ta: 'தயவுசெய்து உள்நுழையவும்.',
-    te: 'దయచేసి సైన్ ఇన్ చేయండి.',
-    ja: '診断ツールにアクセスするにはサインインしてください。'
+  guest_mode: {
+    en: 'Try as Guest',
+    hi: 'अतिथि के रूप में',
+    kn: 'ಅತಿಥಿಯಾಗಿ ಪ್ರಯತ್ನಿಸಿ',
+    ta: 'விருந்தினராக முயற்சிக்கவும்',
+    te: 'గెస్ట్‌గా ప్రయత్నించండి',
+    ja: 'ゲストとして試す'
   },
 
   // --- UPLOAD PAGE ---
-  upload_image: {
-    en: 'Upload Image',
-    hi: 'छवि अपलोड करें',
-    kn: 'ಚಿತ್ರ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ',
-    ta: 'படத்தைப் பதிவேற்றவும்',
-    te: 'చిత్రాన్ని అప్‌లోడ్ చేయండి',
-    ja: '画像をアップロード'
+  upload_title: {
+    en: 'Upload Retinal Scan',
+    hi: 'रेटिनल स्कैन अपलोड करें',
+    kn: 'ರೆಟಿನಲ್ ಸ್ಕ್ಯಾನ್ ಅಪ್‌ಲೋಡ್ ಮಾಡಿ',
+    ta: 'விழித்திரை ஸ்கேன் பதிவேற்றவும்',
+    te: 'రెటీనా స్కాన్ అప్‌లోడ్ చేయండి',
+    ja: '網膜スキャンをアップロード'
   },
-  upload_description: {
-    en: 'Upload a retinal fundus image for AI-powered analysis.',
-    hi: 'AI-संचालित विश्लेषण के लिए रेटिनल फंडस छवि अपलोड करें।',
+  upload_desc: {
+    en: 'Upload a fundus image for AI analysis.',
+    hi: 'AI विश्लेषण के लिए एक फंडस छवि अपलोड करें।',
     kn: 'AI ವಿಶ್ಲೇಷಣೆಗಾಗಿ ಕಣ್ಣಿನ ಚಿತ್ರವನ್ನು ಅಪ್‌ಲೋಡ್ ಮಾಡಿ.',
     ta: 'AI பகுப்பாய்விற்காக விழித்திரை படத்தை பதிவேற்றவும்.',
     te: 'AI విశ్లేషణ కోసం రెటీనా చిత్రాన్ని అప్‌లోడ్ చేయండి.',
     ja: 'AI分析のために眼底画像をアップロードしてください。'
   },
-  analyze_button: {
+  analyze_btn: {
     en: 'Analyze Image',
     hi: 'छवि का विश्लेषण करें',
     kn: 'ಚಿತ್ರ ವಿಶ್ಲೇಷಿಸಿ',
-    ta: 'படத்தை பகுப்பாய்வு செய்',
-    te: 'చిత్రాన్ని విశ్లేషించండి',
+    ta: 'பகுப்பாய்வு செய்',
+    te: 'విశ్లేషించండి',
     ja: '画像を分析'
   },
   analyzing: {
     en: 'Analyzing...',
     hi: 'विश्लेषण हो रहा है...',
     kn: 'ವಿಶ್ಲೇಷಿಸಲಾಗುತ್ತಿದೆ...',
-    ta: 'பகுப்பாய்வு செய்கிறது...',
+    ta: 'பகுப்பாய்வு...',
     te: 'విశ్లేషించబడుతోంది...',
     ja: '分析中...'
-  },
-  analysis_complete: {
-    en: 'Analysis Complete',
-    hi: 'विश्लेषण पूर्ण',
-    kn: 'ವಿಶ್ಲೇಷಣೆ ಪೂರ್ಣಗೊಂಡಿದೆ',
-    ta: 'பகுப்பாய்வு முடிந்தது',
-    te: 'విశ్లేషణ పూర్తయింది',
-    ja: '分析完了'
   },
   upload_guidelines: {
     en: 'Upload Guidelines',
     hi: 'अपलोड दिशानिर्देश',
-    kn: 'ಅಪ್‌ಲೋಡ್ ಮಾರ್ಗಸೂಚಿಗಳು',
-    ta: 'பதிவேற்ற வழிகாட்டுதல்கள்',
-    te: 'అప్‌లోడ్ మార్గదర్శకాలు',
-    ja: 'アップロードガイドライン'
-  },
-  medical_disclaimer: {
-    en: 'Medical Disclaimer: This AI analysis is for screening only.',
-    hi: 'चिकित्सा अस्वीकरण: यह AI विश्लेषण केवल स्क्रीनिंग के लिए है।',
-    kn: 'ವೈದ್ಯಕೀಯ ಹಕ್ಕು ನಿರಾಕರಣೆ: ಇದು ತಪಾಸಣೆಗಾಗಿ ಮಾತ್ರ.',
-    ta: 'மருத்துவ மறுப்பு: இது திரையிடலுக்கு மட்டுமே.',
-    te: 'వైద్య నిరాకరణ: ఇది స్క్రీనింగ్ కోసం మాత్రమే.',
-    ja: '医療免責事項：このAI分析はスクリーニングのみを目的としています。'
+    kn: 'ಮಾರ್ಗಸೂಚಿಗಳು',
+    ta: 'வழிகாட்டுதல்கள்',
+    te: 'మార్గదర్శకాలు',
+    ja: 'ガイドライン'
   },
 
   // --- RESULTS PAGE ---
-  results: {
+  analysis_results: {
     en: 'Analysis Results',
     hi: 'विश्लेषण परिणाम',
     kn: 'ವಿಶ್ಲೇಷಣೆ ಫಲಿತಾಂಶಗಳು',
@@ -128,26 +96,18 @@ const translations: Translations = {
   },
   confidence: {
     en: 'Confidence',
-    hi: 'आत्मविश्वास',
-    kn: 'ವಿಶ್ವಾಸಾರ್ಹತೆ',
+    hi: 'विश्वास',
+    kn: 'ನಂಬಿಕೆ',
     ta: 'நம்பிக்கை',
     te: 'నమ్మకం',
     ja: '信頼度'
   },
-  description: {
-    en: 'Description',
-    hi: 'विवरण',
-    kn: 'ವಿವರಣೆ',
-    ta: 'விளக்கம்',
-    te: 'వివరణ',
-    ja: '説明'
-  },
   severity: {
-    en: 'Severity Level',
-    hi: 'गंभीरता स्तर',
-    kn: 'ತೀವ್ರತೆಯ ಮಟ್ಟ',
+    en: 'Severity',
+    hi: 'गंभीरता',
+    kn: 'ತೀವ್ರತೆ',
     ta: 'தீவிரத்தன்மை',
-    te: 'తీవ్రత స్థాయి',
+    te: 'తీవ్రత',
     ja: '重症度'
   },
   urgency: {
@@ -158,27 +118,19 @@ const translations: Translations = {
     te: 'అత్యవసర',
     ja: '緊急度'
   },
-  lesion_detection: {
-    en: 'AI Lesion Detection',
-    hi: 'AI घाव का पता लगाना',
-    kn: 'AI ಗಾಯ ಪತ್ತೆ',
-    ta: 'AI காயம் கண்டறிதல்',
-    te: 'AI గాయం గుర్తింపు',
-    ja: 'AI病変検出'
+  lesion_map: {
+    en: 'Lesion Detection',
+    hi: 'घाव का पता लगाना',
+    kn: 'ಗಾಯ ಪತ್ತೆ',
+    ta: 'காயம் கண்டறிதல்',
+    te: 'గాయం గుర్తింపు',
+    ja: '病変検出'
   },
-  view_fullscreen: {
-    en: 'View Fullscreen',
-    hi: 'फुलस्क्रीन देखें',
-    kn: 'ಪೂರ್ಣಪರದೆ ವೀಕ್ಷಿಸಿ',
-    ta: 'முழுத்திரை',
-    te: 'పూర్తి స్క్రీన్',
-    ja: '全画面表示'
-  },
-  probability_dist: {
+  prob_distribution: {
     en: 'Probability Distribution',
     hi: 'संभावना वितरण',
     kn: 'ಸಂಭವನೀಯತೆ ಹಂಚಿಕೆ',
-    ta: 'நிகழ்தகவு',
+    ta: 'நிகழ்தகவு விநியோகம்',
     te: 'సంభావ్యత పంపిణీ',
     ja: '確率分布'
   },
@@ -190,79 +142,55 @@ const translations: Translations = {
     te: 'సిఫార్సులు',
     ja: '推奨事項'
   },
-  find_specialists: {
+  find_doctor: {
     en: 'Find Specialists',
     hi: 'विशेषज्ञ खोजें',
     kn: 'ತಜ್ಞರನ್ನು ಹುಡುಕಿ',
-    ta: 'நிபுணர்களைக் கண்டறியவும்',
+    ta: 'நிபுணர்களைக் கண்டறி',
     te: 'నిపుణులను కనుగొనండి',
     ja: '専門医を探す'
   },
-  book_appointment: {
+  book_appt: {
     en: 'Book Appointment',
     hi: 'अपॉइंटमेंट बुक करें',
-    kn: 'ಅಪಾಯಿಂಟ್ಮೆಂಟ್ ಬುಕ್ ಮಾಡಿ',
-    ta: 'நியமனம் பதிவு',
-    te: 'అపాయింట్‌మెంట్ బుక్ చేయండి',
+    kn: 'ಅಪಾಯಿಂಟ್ಮೆಂಟ್',
+    ta: 'முன்பதிவு',
+    te: 'అపాయింట్‌మెంట్',
     ja: '予約する'
   },
-  share_results: {
-    en: 'Share Results',
-    hi: 'परिणाम साझा करें',
-    kn: 'ಫಲಿತಾಂಶ ಹಂಚಿಕೊಳ್ಳಿ',
-    ta: 'பகிர்',
-    te: 'ఫలితాలను భాగస్వామ్యం చేయండి',
-    ja: '結果を共有'
-  },
-  download_pdf: {
-    en: 'Download PDF',
-    hi: 'PDF डाउनलोड करें',
-    kn: 'PDF ಡೌನ್‌ಲೋಡ್',
-    ta: 'PDF பதிவிறக்கம்',
-    te: 'PDF డౌన్‌లోడ్',
-    ja: 'PDFをダウンロード'
+  download_report: {
+    en: 'Download Report',
+    hi: 'रिपोर्ट डाउनलोड करें',
+    kn: 'ವರದಿ ಡೌನ್‌ಲೋಡ್',
+    ta: 'அறிக்கை பதிவிறக்கம்',
+    te: 'నివేదిక డౌన్‌లోడ్',
+    ja: 'レポートをダウンロード'
   },
 
   // --- HISTORY PAGE ---
-  history: {
+  scan_history: {
     en: 'Scan History',
     hi: 'स्कैन इतिहास',
     kn: 'ಸ್ಕ್ಯಾನ್ ಇತಿಹಾಸ',
-    ta: 'வரலாறு',
+    ta: 'ஸ்கேன் வரலாறு',
     te: 'స్కాన్ చరిత్ర',
     ja: 'スキャン履歴'
   },
   clear_history: {
-    en: 'Clear All History',
-    hi: 'सारा इतिहास मिटा दें',
+    en: 'Clear History',
+    hi: 'इतिहास साफ़ करें',
     kn: 'ಇತಿಹಾಸ ಅಳಿಸಿ',
     ta: 'வரலாற்றை அழிக்கவும்',
     te: 'చరిత్రను తొలగించండి',
     ja: '履歴を消去'
   },
-  total_scans: {
-    en: 'Total Scans',
-    hi: 'कुल स्कैन',
-    kn: 'ಒಟ್ಟು ಸ್ಕ್ಯಾನ್‌ಗಳು',
-    ta: 'மொத்த ஸ்கேன்',
-    te: 'మొత్తం స్కాన్‌లు',
-    ja: '総スキャン数'
-  },
-  normal_results: {
-    en: 'Normal Results',
-    hi: 'सामान्य परिणाम',
-    kn: 'ಸಾಮಾನ್ಯ ಫಲಿತಾಂಶಗಳು',
-    ta: 'சாதாரண முடிவுகள்',
-    te: 'సాధారణ ఫలితాలు',
-    ja: '正常な結果'
-  },
-  abnormal_results: {
-    en: 'Issues Found',
-    hi: 'समस्याएं मिलीं',
-    kn: 'ಸಮಸ್ಯೆಗಳು',
-    ta: 'கண்டறியப்பட்ட சிக்கல்கள்',
-    te: 'గుర్తించిన సమస్యలు',
-    ja: '異常あり'
+  no_scans: {
+    en: 'No scans found',
+    hi: 'कोई स्कैन नहीं मिला',
+    kn: 'ಯಾವುದೇ ಸ್ಕ್ಯಾನ್‌ಗಳಿಲ್ಲ',
+    ta: 'ஸ்கேன் இல்லை',
+    te: 'స్కాన్‌లు లేవు',
+    ja: 'スキャンなし'
   },
   search_placeholder: {
     en: 'Search date or disease...',
@@ -271,14 +199,6 @@ const translations: Translations = {
     ta: 'தேடு...',
     te: 'శోధించండి...',
     ja: '検索...'
-  },
-  no_scans: {
-    en: 'No scans found.',
-    hi: 'कोई स्कैन नहीं मिला।',
-    kn: 'ಯಾವುದೇ ಸ್ಕ್ಯಾನ್‌ಗಳಿಲ್ಲ.',
-    ta: 'ஸ்கேன் இல்லை.',
-    te: 'స్కాన్‌లు లేవు.',
-    ja: 'スキャンが見つかりません。'
   },
 
   // --- SETTINGS PAGE ---
@@ -297,22 +217,6 @@ const translations: Translations = {
     ta: 'தோற்றம்',
     te: 'స్వరూపం',
     ja: '外観'
-  },
-  theme: {
-    en: 'Theme',
-    hi: 'थीम',
-    kn: 'ಥೀಮ್',
-    ta: 'தீம்',
-    te: 'థీమ్',
-    ja: 'テーマ'
-  },
-  language: {
-    en: 'Language',
-    hi: 'भाषा',
-    kn: 'ಭಾಷೆ',
-    ta: 'மொழி',
-    te: 'భాష',
-    ja: '言語'
   },
   personal_info: {
     en: 'Personal Information',
@@ -338,29 +242,21 @@ const translations: Translations = {
     te: 'డేటా గోప్యత',
     ja: 'データとプライバシー'
   },
-  share_data: {
-    en: 'Share Anonymous Data',
-    hi: 'गुमनाम डेटा साझा करें',
-    kn: 'ಅನಾಮಧೇಯ ಡೇಟಾ ಹಂಚಿಕೊಳ್ಳಿ',
-    ta: 'தரவைப் பகிரவும்',
-    te: 'డేటాను భాగస్వామ్యం చేయండి',
-    ja: '匿名データを共有'
-  },
   export_data: {
     en: 'Export Data',
-    hi: 'डेटा निर्यात करें',
-    kn: 'ಡೇಟಾ ರಫ್ತು ಮಾಡಿ',
-    ta: 'தரவை ஏற்றுமதி செய்',
+    hi: 'डेटा निर्यात',
+    kn: 'ಡೇಟಾ ರಫ್ತು',
+    ta: 'தரவு ஏற்றுமதி',
     te: 'డేటా ఎగుమతి',
     ja: 'データのエクスポート'
   },
-  delete_all: {
+  delete_data: {
     en: 'Delete All Data',
     hi: 'सारा डेटा हटाएं',
     kn: 'ಎಲ್ಲಾ ಡೇಟಾ ಅಳಿಸಿ',
     ta: 'எல்லா தரவையும் நீக்கு',
-    te: 'మొత్తం డేటాను తొలగించండి',
-    ja: 'すべてのデータを削除'
+    te: 'మొత్తం డేటాను తొలగించు',
+    ja: '全データを削除'
   },
 
   // --- DISEASES ---
@@ -396,13 +292,15 @@ const translations: Translations = {
     te: 'మధుమేహ రెటినోపతి',
     ja: '糖尿病網膜症'
   },
-  unknown: {
-    en: 'Unknown',
-    hi: 'अज्ञात',
-    kn: 'ಅಜ್ಞಾತ',
-    ta: 'தெரியாத',
-    te: 'తెలియదు',
-    ja: '不明'
+  
+  // --- DISCLAIMER ---
+  disclaimer: {
+    en: 'Important: This AI analysis is for screening only. Consult a doctor.',
+    hi: 'महत्वपूर्ण: यह एआई विश्लेषण केवल स्क्रीनिंग के लिए है। डॉक्टर से सलाह लें।',
+    kn: 'ಪ್ರಮುಖ: ಇದು ಕೇವಲ ತಪಾಸಣೆಗಾಗಿ. ವೈದ್ಯರನ್ನು ಸಂಪರ್ಕಿಸಿ.',
+    ta: 'முக்கியம்: இது திரையிடலுக்கு மட்டுமே. மருத்துவரை அணுகவும்.',
+    te: 'ముఖ్యం: ఇది స్క్రీనింగ్ కోసం మాత్రమే. వైద్యుడిని సంప్రదించండి.',
+    ja: '重要：このAI分析はスクリーニングのみを目的としています。医師にご相談ください。'
   }
 };
 
@@ -419,10 +317,18 @@ export const LanguageProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const setLanguage = (lang: Language) => {
     setCurrentLanguage(lang);
+    // Optional: Persist language preference
+    localStorage.setItem('app_language', lang);
   };
 
+  // Load language preference on mount
+  React.useEffect(() => {
+    const savedLang = localStorage.getItem('app_language') as Language;
+    if (savedLang) setCurrentLanguage(savedLang);
+  }, []);
+
   const t = (key: string): string => {
-    // Return translation if exists, else return key as fallback
+    // Fallback to English if translation is missing
     return translations[key]?.[currentLanguage] || translations[key]?.['en'] || key;
   };
 
