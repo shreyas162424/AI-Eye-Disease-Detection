@@ -107,7 +107,7 @@
 //     <div className="container mx-auto px-4 py-8 max-w-7xl">
 //       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.6 }} className="space-y-8">
 //         <div className="text-center space-y-4">
-//           <h1 className="text-3xl md:text-4xl font-bold">{t('doctors_nearby')}</h1>
+//           <h1 className="text-3xl md:text-4xl font-bold">{t('Doctors nearby')}</h1>
 //           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
 //             Find qualified eye specialists and ophthalmologists in your area.
 //           </p>
