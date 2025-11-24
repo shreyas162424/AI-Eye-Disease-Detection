@@ -1,4 +1,4 @@
-// src/lib/generateReport.ts
+// src/lib/generatereport.ts
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -23,7 +23,8 @@ function addPageIfNeeded(doc: jsPDF, y: number, marginBottom = 25) {
   return y;
 }
 
-export function generateReport(result: PredictionResult, patientName: string) {
+// --- CORE PDF GENERATOR (Returns the doc object) ---
+function createReportDoc(result: PredictionResult, patientName: string): jsPDF {
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
@@ -188,10 +189,44 @@ export function generateReport(result: PredictionResult, patientName: string) {
     doc.setTextColor(120);
     doc.text(`Page ${p} / ${pageCount}`, pageWidth - marginLeft, pageHeight - 8, { align: "right" });
   }
+  
+  return doc;
+}
 
-  // Save
+// --- ORIGINAL DOWNLOAD FUNCTION ---
+export function generateReport(result: PredictionResult, patientName: string) {
+  const doc = createReportDoc(result, patientName);
   const filename = `AI_Retina_Report_${sanitizeFilename(patientName || "patient")}_${new Date().toISOString().slice(0,19).replace(/[:]/g,'-')}.pdf`;
   doc.save(filename);
+}
+
+// --- NEW SHARE FUNCTION ---
+export async function shareReport(result: PredictionResult, patientName: string): Promise<boolean> {
+  const doc = createReportDoc(result, patientName);
+  const filename = `Report_${sanitizeFilename(patientName)}.pdf`;
+  
+  // Convert PDF to Blob
+  const blob = doc.output('blob');
+  const file = new File([blob], filename, { type: "application/pdf" });
+
+  // Try Native Sharing
+  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: 'Eye Scan Report',
+        text: `Medical analysis report for ${patientName}.`
+      });
+      return true;
+    } catch (error) {
+      console.error("Sharing failed", error);
+      return false;
+    }
+  } else {
+    // Fallback to download if sharing not supported
+    doc.save(filename);
+    return false;
+  }
 }
 
 /* helper: small function to split long footer nicely */
