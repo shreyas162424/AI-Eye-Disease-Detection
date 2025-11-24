@@ -55,7 +55,7 @@ const Home = () => {
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" onClick={handleStart} className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl">
-                <Upload className="mr-2 h-5 w-5" /> {t('analyze_btn') || 'Start Diagnosis'}
+                <Upload className="mr-2 h-5 w-5" /> {t('Analyze button') || 'Start Diagnosis'}
               </Button>
               <Button size="lg" variant="outline" onClick={handleDemo} className="h-14 px-8 text-lg rounded-full">
                 <PlayCircle className="mr-2 h-5 w-5" /> View Demo Result
