@@ -49,7 +49,7 @@ export function AppSidebar() {
       description: "View analysis results"
     },
     { 
-      title: t('doctors_nearby'), 
+      title: t('Doctors nearby'), 
       url: "/doctors", 
       icon: MapPin,
       description: "Find eye specialists"
