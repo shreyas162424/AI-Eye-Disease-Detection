@@ -4,11 +4,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { SidebarProvider } from "@/components/ui/sidebar";
+// Import SidebarTrigger to get the "Hamburger" button
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
+import { Menu } from "lucide-react";
 
 // Pages
 import Dashboard from "@/components/Dashboard";
@@ -20,7 +22,6 @@ import HistoryPage from "./pages/HistoryPage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFound from "./pages/NotFound";
 
-// --- NEW: Import Footer ---
 import Footer from "@/components/Footer";
 
 const queryClient = new QueryClient();
@@ -36,9 +37,8 @@ const App = () => (
             <Routes>
               {/* --- PUBLIC HOME PAGE --- */}
               <Route path="/" element={
-                <div className="min-h-screen flex flex-col">
-                  {/* Header */}
-                  <header className="p-4 flex justify-between items-center bg-white shadow-sm sticky top-0 z-50">
+                <div className="min-h-screen flex flex-col bg-white text-slate-900">
+                  <header className="p-4 flex justify-between items-center bg-white border-b border-slate-100 sticky top-0 z-50">
                     <h1 className="font-bold text-xl text-blue-700">Clarity Scan Aid</h1>
                     <div className="flex gap-4 items-center">
                       <SignedOut>
@@ -55,12 +55,10 @@ const App = () => (
                     </div>
                   </header>
 
-                  {/* Main Content */}
                   <main className="flex-grow">
                     <Home />
                   </main>
 
-                  {/* Footer */}
                   <Footer />
                 </div>
               } />
@@ -69,34 +67,48 @@ const App = () => (
               <Route path="/*" element={
                 <>
                   <SignedOut>
-                    <div className="flex flex-col items-center justify-center h-screen bg-gray-50 text-center p-4">
-                      <h2 className="text-2xl font-bold mb-2">Medical Dashboard Locked</h2>
+                    <div className="flex flex-col items-center justify-center h-screen bg-gray-50 text-center p-4 text-slate-900">
+                      <h2 className="text-2xl font-bold mb-2">Access Restricted</h2>
                       <p className="mb-6 text-gray-600">Please sign in to access diagnostic tools.</p>
                       <SignInButton mode="modal">
                         <button className="bg-slate-900 text-white px-6 py-3 rounded-lg hover:bg-slate-800">
                           Sign In / Register
                         </button>
                       </SignInButton>
-                      <div className="mt-auto pb-8">
+                      <div className="mt-auto pb-8 w-full">
                         <Footer />
                       </div>
                     </div>
                   </SignedOut>
 
                   <SignedIn>
+                    {/* SidebarProvider needs to wrap the whole layout */}
                     <SidebarProvider>
-                      <div className="flex min-h-screen w-full">
+                      <div className="flex min-h-screen w-full bg-gray-50 dark:bg-slate-950">
+                        
                         <AppSidebar />
-                        {/* Main Dashboard Area */}
-                        <main className="flex-1 flex flex-col h-screen overflow-hidden">
-                           {/* Header Bar inside Dashboard */}
-                           <div className="p-4 flex justify-end bg-white border-b border-slate-100">
-                             <UserButton />
-                           </div>
+                        
+                        {/* Main Content Area */}
+                        <main className="flex-1 flex flex-col h-screen overflow-hidden text-slate-900 dark:text-slate-50">
                            
-                           {/* Scrollable Content */}
-                           <div className="flex-1 overflow-auto p-4 bg-gray-50 flex flex-col">
-                              <div className="flex-grow">
+                           {/* --- MOBILE-READY HEADER --- */}
+                           {/* This bar stays at the top and holds the hamburger menu */}
+                           <header className="flex h-14 items-center gap-4 border-b bg-white dark:bg-slate-900 px-4 shadow-sm shrink-0 z-40">
+                             {/* The Hamburger Trigger */}
+                             <SidebarTrigger className="p-2 hover:bg-slate-100 rounded-md">
+                                <Menu className="h-5 w-5 text-slate-700 dark:text-slate-200" />
+                             </SidebarTrigger>
+                             
+                             <div className="flex-1 font-semibold text-slate-700 dark:text-slate-200">
+                               Dashboard
+                             </div>
+                             
+                             <UserButton afterSignOutUrl="/" />
+                           </header>
+                           
+                           {/* Scrollable Page Content */}
+                           <div className="flex-1 overflow-auto p-4 md:p-6">
+                              <div className="flex-grow min-h-[calc(100vh-10rem)]">
                                 <Routes>
                                   <Route path="upload" element={<UploadPage />} />
                                   <Route path="results" element={<ResultsPage />} />
@@ -110,7 +122,6 @@ const App = () => (
                                 </Routes>
                               </div>
                               
-                              {/* Footer at the bottom of dashboard content */}
                               <div className="mt-8">
                                 <Footer />
                               </div>
