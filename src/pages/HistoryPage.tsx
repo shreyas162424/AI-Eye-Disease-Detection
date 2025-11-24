@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Calendar, Eye, Download, Share2, Search, AlertCircle, CheckCircle, Trash2
+  Calendar, Eye, Download, Search, AlertCircle, CheckCircle, Trash2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,12 +10,12 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useUser } from "@clerk/clerk-react"; // Clerk User
-import { getScans, clearScans, ScanRecord } from '@/lib/scanStorage'; // Local Storage
-import { generateReport } from '@/lib/generatereport'; // Your robust PDF generator
+import { useUser } from "@clerk/clerk-react";
+import { getScans, clearScans, ScanRecord } from '@/lib/scanStorage';
+import { generateReport } from '@/lib/generatereport';
 
 const HistoryPage: React.FC = () => {
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [history, setHistory] = useState<ScanRecord[]>([]);
   const [filteredHistory, setFilteredHistory] = useState<ScanRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,15 +25,17 @@ const HistoryPage: React.FC = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
 
-  // Load history when user loads
+  // 1. Load History (Safe for Guests)
   useEffect(() => { 
-    if (user) {
-      const data = getScans(user.id);
+    if (isLoaded) {
+      const userId = user ? user.id : "guest";
+      const data = getScans(userId);
       setHistory(data);
       setLoading(false);
     }
-  }, [user]);
+  }, [user, isLoaded]);
 
+  // 2. Filter Logic
   useEffect(() => { filterAndSortHistory(); }, [history, searchTerm, filterDisease, sortOrder]);
 
   const normalizeDisease = (s?: string | null) => (s ? String(s).toLowerCase() : '');
@@ -58,7 +60,8 @@ const HistoryPage: React.FC = () => {
 
   const handleClearHistory = () => {
     if (confirm("Are you sure you want to delete all history? This cannot be undone.")) {
-       if (user) clearScans(user.id);
+       const userId = user ? user.id : "guest";
+       clearScans(userId);
        setHistory([]);
        toast({ title: "History Cleared", description: "All records have been deleted." });
     }
@@ -74,31 +77,18 @@ const HistoryPage: React.FC = () => {
     return d === 'normal' ? 'secondary' : 'destructive';
   };
 
-  const getDiseaseIcon = (disease: string) => (normalizeDisease(disease) === 'normal' ? CheckCircle : AlertCircle);
-
   const getUniqueDiseases = () => Array.from(new Set(history.map(i => normalizeDisease(i.prediction)))).filter(Boolean);
 
-  // Statistics
-  const stats = {
-    total: history.length,
-    normal: history.filter(i => normalizeDisease(i.prediction) === 'normal').length,
-    abnormal: history.filter(i => normalizeDisease(i.prediction) !== 'normal').length,
-    avgConf: history.length > 0 
-      ? (history.reduce((acc, i) => acc + Number(i.probability), 0) / history.length * 100).toFixed(1) 
-      : '0'
-  };
-
-  // Handlers
+  // 3. PDF Download
   const handleDownloadPDF = (item: ScanRecord) => {
-    // Convert ScanRecord back to PredictionResult format for the generator
     const mockResult = {
       predicted_disease: item.prediction,
       confidence: Number(item.probability),
-      probabilities: {}, // Stored history doesn't have full probs, which is fine
+      probabilities: {}, 
       heatmap_png_base64: item.gradcamDataUrl?.split(',')[1], 
       mask_png_base64: item.maskDataUrl?.split(',')[1]
     };
-    generateReport(mockResult, user?.fullName || "Patient");
+    generateReport(mockResult, user?.fullName || "Guest Patient");
     toast({ title: "Report Downloaded", description: "PDF generated successfully." });
   };
 
@@ -106,7 +96,7 @@ const HistoryPage: React.FC = () => {
     <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[50vh]">
       <div className="text-center space-y-4">
         <Eye className="h-12 w-12 animate-pulse text-blue-600 mx-auto"/>
-        <p className="text-gray-500">Loading your secure history...</p>
+        <p className="text-gray-500">Loading scan history...</p>
       </div>
     </div>
   );
@@ -115,7 +105,6 @@ const HistoryPage: React.FC = () => {
     <div className="container mx-auto px-4 py-8 max-w-6xl">
       <motion.div initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} transition={{duration:0.6}} className="space-y-8">
         
-        {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4">
           <div>
             <h1 className="text-3xl font-bold">{t('history') || 'Scan History'}</h1>
@@ -126,14 +115,6 @@ const HistoryPage: React.FC = () => {
               <Trash2 className="h-4 w-4 mr-2" /> Clear All History
             </Button>
           )}
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Card><CardContent className="p-6 text-center"><div className="text-2xl font-bold">{stats.total}</div><div className="text-xs text-gray-500">Total Scans</div></CardContent></Card>
-          <Card><CardContent className="p-6 text-center"><div className="text-2xl font-bold text-green-600">{stats.normal}</div><div className="text-xs text-gray-500">Normal</div></CardContent></Card>
-          <Card><CardContent className="p-6 text-center"><div className="text-2xl font-bold text-red-600">{stats.abnormal}</div><div className="text-xs text-gray-500">Issues Found</div></CardContent></Card>
-          <Card><CardContent className="p-6 text-center"><div className="text-2xl font-bold text-blue-600">{stats.avgConf}%</div><div className="text-xs text-gray-500">Avg. Confidence</div></CardContent></Card>
         </div>
 
         {/* Filters */}
@@ -179,12 +160,10 @@ const HistoryPage: React.FC = () => {
                 <Card className="hover:shadow-md transition-all">
                   <CardContent className="p-4 flex items-center gap-4">
                     
-                    {/* Thumbnail */}
                     <div className="h-16 w-16 rounded-md overflow-hidden bg-gray-100 border flex-shrink-0">
                       <img src={item.imageDataUrl} alt="Scan" className="h-full w-full object-cover" />
                     </div>
 
-                    {/* Info */}
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant={getDiseaseVariant(item.prediction)} className="capitalize">
@@ -197,7 +176,6 @@ const HistoryPage: React.FC = () => {
                       <p className="text-sm text-gray-600">Confidence: {(Number(item.probability)*100).toFixed(1)}%</p>
                     </div>
 
-                    {/* Actions */}
                     <div className="flex gap-2">
                       <Button variant="ghost" size="icon" onClick={() => handleDownloadPDF(item)}>
                         <Download className="h-4 w-4 text-gray-500" />
