@@ -15,18 +15,24 @@ const Home = () => {
   };
 
   const handleDemo = () => {
-    // Create dummy result for demo
     const demoResult = {
       predicted_disease: "Glaucoma",
       confidence: 0.94,
-      probabilities: { "Glaucoma": 0.94, "Cataract": 0.03, "Diabetic Retinopathy": 0.02, "Normal": 0.01 },
+      probabilities: {
+        "Glaucoma": 0.94,
+        "Cataract": 0.03,
+        "Diabetic Retinopathy": 0.02,
+        "Normal": 0.01
+      },
       heatmap_png_base64: null, 
       mask_png_base64: null
     };
+
     navigate("/results", { 
       state: { 
         result: demoResult,
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Fundus_photograph_of_normal_left_eye.jpg/600px-Fundus_photograph_of_normal_left_eye.jpg"
+        // ✅ CHANGED: Using a reliable Unsplash medical image instead of Wikipedia
+        imageUrl: "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=800&q=80"
       } 
     });
   };
