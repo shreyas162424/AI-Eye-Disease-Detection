@@ -11,13 +11,13 @@ export interface ScanRecord {
 
 const BASE_KEY = 'clarity_scan_history';
 
-// Helper to get the key for a specific user
-const getUserKey = (userId: string) => `${BASE_KEY}_${userId}`;
+// Helper: If userId is missing, use 'guest'
+const getUserKey = (userId: string | null | undefined) => `${BASE_KEY}_${userId || 'guest'}`;
 
-export const getScans = (userId: string): ScanRecord[] => {
-  if (!userId) return [];
+export const getScans = (userId?: string | null): ScanRecord[] => {
   try {
-    const data = localStorage.getItem(getUserKey(userId));
+    const key = getUserKey(userId);
+    const data = localStorage.getItem(key);
     return data ? JSON.parse(data) : [];
   } catch (error) {
     console.error("Error reading scans", error);
@@ -25,18 +25,18 @@ export const getScans = (userId: string): ScanRecord[] => {
   }
 };
 
-export const saveScan = (userId: string, scan: ScanRecord) => {
-  if (!userId) return;
+export const saveScan = (userId: string | null | undefined, scan: ScanRecord) => {
   try {
+    const key = getUserKey(userId);
     const scans = getScans(userId);
-    const updatedScans = [scan, ...scans].slice(0, 50); // Keep last 50
-    localStorage.setItem(getUserKey(userId), JSON.stringify(updatedScans));
+    // Add new scan to top, keep last 50
+    const updatedScans = [scan, ...scans].slice(0, 50); 
+    localStorage.setItem(key, JSON.stringify(updatedScans));
   } catch (error) {
     console.error("Error saving scan", error);
   }
 };
 
-export const clearScans = (userId: string) => {
-  if (!userId) return;
+export const clearScans = (userId?: string | null) => {
   localStorage.removeItem(getUserKey(userId));
 };
