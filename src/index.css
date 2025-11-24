@@ -2,54 +2,65 @@
 @tailwind components;
 @tailwind utilities;
 
-/* -------------------------------------------------------------------------- */
-/* DESIGN SYSTEM (THEME)                            */
-/* -------------------------------------------------------------------------- */
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
 
 @layer base {
   :root {
-    /* Light Mode Defaults (High Contrast) */
-    --background: 0 0% 100%;       /* White */
-    --foreground: 222.2 84% 4.9%;  /* Dark Blue/Black */
-    
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
-    
+
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
-    
-    /* Medical Blue */
+
+    /* Medical blue theme */
     --primary: 211 100% 40%;
     --primary-foreground: 0 0% 98%;
     --primary-soft: 211 100% 45%;
     --primary-glow: 211 85% 55%;
-    
+
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    
+
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    
+
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
-    
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
 
-    /* Status Colors */
+    /* Medical status colors */
     --success: 142 76% 36%;
     --success-foreground: 355.7 100% 97.3%;
-    
+    --success-soft: 142 69% 58%;
+
     --warning: 32 95% 44%;
     --warning-foreground: 355.7 100% 97.3%;
+    --warning-soft: 43 96% 56%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 211 100% 40%;
-    
-    --radius: 0.5rem;
 
-    /* Sidebar */
+    --radius: 0.75rem;
+
+    /* Medical gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--success-soft)));
+    --gradient-warning: linear-gradient(135deg, hsl(var(--warning)), hsl(var(--warning-soft)));
+
+    /* Shadows */
+    --shadow-medical: 0 10px 30px -10px hsl(var(--primary) / 0.2);
+    --shadow-success: 0 10px 30px -10px hsl(var(--success) / 0.2);
+    --shadow-warning: 0 10px 30px -10px hsl(var(--warning) / 0.2);
+
+    /* Sidebar theme */
     --sidebar-background: 222.2 84% 4.9%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 211 100% 40%;
@@ -58,40 +69,53 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 17.5%;
     --sidebar-ring: 211 100% 40%;
+
+    /* Animation */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .dark {
-    /* Dark Mode Defaults (Optimized for visibility) */
-    --background: 222.2 84% 4.9%;  /* Dark Navy */
-    --foreground: 210 40% 98%;     /* White */
-    
-    --card: 222.2 84% 4.9%;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 217.2 32.6% 17.5%;
     --card-foreground: 210 40% 98%;
-    
-    --popover: 222.2 84% 4.9%;
+
+    --popover: 217.2 32.6% 17.5%;
     --popover-foreground: 210 40% 98%;
-    
-    /* Adjusted Primary for Dark Mode */
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    
+
+    /* Keep medical blue in dark mode */
+    --primary: 211 85% 55%;
+    --primary-foreground: 222.2 84% 4.9%;
+    --primary-soft: 211 80% 60%;
+    --primary-glow: 211 75% 65%;
+
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
-    
+
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-    
+
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-    
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    
+
+    /* Adjust medical status for dark mode */
+    --success: 142 69% 58%;
+    --success-foreground: 222.2 84% 4.9%;
+    --success-soft: 142 64% 63%;
+
+    --warning: 43 96% 56%;
+    --warning-foreground: 222.2 84% 4.9%;
+    --warning-soft: 43 91% 61%;
+
+    --destructive: 0 72% 65%;
+    --destructive-foreground: 222.2 84% 4.9%;
+
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 211 85% 55%;
 
-    /* Sidebar Dark */
+    /* Dark mode sidebar */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 211 85% 55%;
@@ -107,43 +131,41 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
 }
 
-/* -------------------------------------------------------------------------- */
-/* CUSTOM COMPONENT STYLES                         */
-/* -------------------------------------------------------------------------- */
+/* --- additional fixes for charts + gradcam (paste at bottom) --- */
 
-/* --- CHART.JS & GRAD-CAM FIXES --- */
-
-/* Force charts to have a clean white background for readability */
+/* force Chart.js canvases to show a white background and rounded corners */
 .chart-surface,
 .chart-surface canvas {
   background: #ffffff !important;
   border-radius: 8px;
-  color: initial !important;
 }
 
-/* Ensure chart padding */
+/* ensure chart card padding doesn't hide axis labels on small screens */
 .chart-surface {
   padding: 1rem !important;
   box-sizing: border-box;
 }
 
-/* Grad-CAM container: Responsive & Centered */
+/* Grad-CAM image container: smaller and centered */
 .gradcam-container {
-  max-width: 480px;
+  max-width: 480px;      /* reduced size for a smaller Grad-CAM */
   width: 100%;
   background: #ffffff;
   border-radius: 8px;
   overflow: hidden;
   margin: 0 auto;
   position: relative;
+  /* keep a nice square-ish look on wider screens */
   aspect-ratio: 1 / 1;
 }
 
+/* Ensure heatmap/original image scales and centers inside the container */
 .gradcam-container img {
   display: block;
   width: 100%;
@@ -152,75 +174,141 @@
   background: #fff;
 }
 
-/* Responsive Tweaks for Mobile */
-@media (max-width: 420px) {
-  .gradcam-container {
-    max-width: 100%;
-    height: auto;
-    aspect-ratio: 1/1;
-  }
+/* Buttons grid: full-width and wrap on small screens */
+.heatmap-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
+@media (min-width: 640px) {
+  .heatmap-actions { grid-template-columns: 1fr 1fr; }
 }
 
-/* --- CHAT WIDGET STYLES --- */
-
-.chat-panel {
-  border: 1px solid rgba(15, 23, 42, 0.1);
-  box-shadow: 0 20px 40px -10px rgba(0,0,0,0.2);
-  border-radius: 12px;
-  background: #ffffff;
+/* Ensure the responsive action grid used under the image looks neat */
+.gradcam-actions-wrapper {
+  max-width: 640px;
+  margin: 0 auto;
 }
 
-/* Ensure scrolling works */
-.chat-panel .scroll-area {
-  height: 100%;
-  overflow-y: auto;
-}
+/* Make sure modal is topmost */
+.fixed-z50 { z-index: 99999; }
 
-/* Messages styling */
-.chat-message {
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-/* System/Assistant Message - Light Grey */
-.chat-message.assistant {
-  background: #f3f4f6;
-  color: #1f2937;
-  border: 1px solid #e5e7eb;
-}
-
-/* User Message - Blue */
-.chat-message.user {
-  background: #eff6ff; /* Light Blue */
-  color: #1e40af;      /* Dark Blue Text */
-  border: 1px solid #dbeafe;
-  align-self: flex-end;
-}
-
-/* Mobile Chat sizing */
-@media (max-width: 480px) {
-  .chat-panel {
-    width: 90vw !important;
-    right: 5vw !important;
-    bottom: 80px !important; /* Above navigation */
-    height: 60vh !important;
-  }
-}
-
-/* --- UTILITY CLASSES --- */
-
+/* Small helper for visible card backgrounds inside dark shells */
 .white-card {
   background: #ffffff;
 }
 
-/* Ensure modals appear on top */
-.fixed-z50 {
-  z-index: 99999;
+/* Optional: make tooltip fonts readable */
+canvas { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue"; }
+
+/* Small responsive tweak: shrink gradcam a bit on very small screens */
+@media (max-width: 420px) {
+  .gradcam-container { max-width: 320px; aspect-ratio: auto; height: 300px; }
+}
+/* ensure chart.js draws colored bars/pie segments even if a global filter exists */
+.chart-surface canvas {
+  background: #ffffff !important;
+  color: initial !important;
+}
+/* ---------- ResultsPage UI helper rules ---------- */
+
+/* Keep card canvas readable */
+.chart-surface,
+.chart-surface canvas {
+  background: #ffffff !important;
+  border-radius: 8px;
 }
 
-/* Make tooltips readable */
-canvas {
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+/* Ensure chart container padding doesn't hide axis labels */
+.chart-surface { padding: 1rem !important; box-sizing: border-box; }
+
+/* Grad-CAM container: scales well and keeps overlay aligned */
+.gradcam-container { max-width: 480px; width: 100%; margin: 0 auto; background: #fff; border-radius: 8px; overflow: hidden; }
+.gradcam-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Actions wrapper for gradcam */
+.gradcam-actions-wrapper { max-width: 640px; margin: 0 auto; }
+
+/* Chat assistant column: make ChatAssistant scrollable inside card (avoid page overflow) */
+.card-chat { display: flex; flex-direction: column; height: 100%; }
+.card-chat .card-content { overflow: auto; }
+
+/* Ensure ChatAssistant itself (inside card) is scrollable and readable */
+.ChatAssistant-root { min-height: 260px; }
+
+/* Buttons grid safety */
+.results-buttons-grid { display: grid; grid-template-columns: 1fr; gap: 0.5rem; }
+@media (min-width: 640px) { .results-buttons-grid { grid-template-columns: 1fr 1fr; } }
+@media (min-width: 1024px) { .results-buttons-grid { grid-template-columns: repeat(3, 1fr); } }
+
+/* Modal z-index safety */
+.fixed-z50 { z-index: 99999; }
+/* Chat widget styles */
+.chat-bubble {
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+/* panel shadow + border-radius */
+.chat-panel {
+  border: 1px solid rgba(15, 23, 42, 0.04);
+}
+
+/* ensure ChatAssistant content scrolls nicely inside the panel */
+.chat-panel .ace_chat_content, .chat-panel .ChatAssistant-root {
+  height: 100%;
+  overflow: auto;
+}
+/* ChatAssistant / ChatWidget fixes */
+
+/* root layout */
+.chat-root { display: flex; flex-direction: column; height: 100%; min-height: 260px; }
+
+/* header */
+.chat-header { border-bottom: 1px solid rgba(15,23,42,0.06); background: transparent; }
+
+/* body */
+.chat-body { background: transparent; }
+
+/* messages */
+.chat-message { padding: 0.5rem 0.75rem; border-radius: 8px; }
+.chat-message.system {
+  background: rgba(250,250,210,0.95); /* pale yellow but with solid contrast */
+  color: #0f172a; /* dark text for readability */
+  border: 1px solid rgba(0,0,0,0.06);
+}
+.chat-message.assistant {
+  background: rgba(243,244,246,0.9);
+  color: #0f172a;
+  border: 1px solid rgba(15,23,42,0.04);
+}
+.chat-message.user {
+  background: rgba(59,130,246,0.08);
+  color: #0f172a;
+  border: 1px solid rgba(59,130,246,0.12);
+  align-self: flex-end;
+}
+
+/* meta text */
+.chat-message .meta { opacity: 0.8; margin-bottom: 0.25rem; }
+
+/* input area */
+.chat-input-area { background: #fff; }
+.chat-input-area input[type="text"], .chat-input-area input[type="search"], .chat-input-area textarea {
+  background: #fff;
+  border: 1px solid rgba(15,23,42,0.06);
+}
+
+/* ensure panel looks compact and has no huge empty area */
+.chat-panel .p-3 { padding: 0.75rem; }
+
+/* floating panel specifics (if used inside ChatWidget) */
+.chat-panel { box-shadow: 0 25px 50px -12px rgba(2,6,23,0.4); border-radius: 12px; }
+.chat-panel .border-b { border-bottom: 1px solid rgba(15,23,42,0.06); }
+
+/* make system box text readable (fix you had: very light text) */
+.chat-message.system { color: #0f172a; }
+
+/* small screens: reduce chat size */
+@media (max-width: 480px) {
+  .chat-panel { width: 92vw !important; right: 4vw !important; bottom: 6vh !important; }
 }
