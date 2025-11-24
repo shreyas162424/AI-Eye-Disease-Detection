@@ -30,16 +30,13 @@ const SettingsPage = () => {
   const [userSettings, setUserSettings] = useState(() => {
     try {
       const saved = localStorage.getItem('user_preferences');
-      // Check if saved is valid JSON and not "undefined" string
       if (saved && saved !== "undefined") {
         return JSON.parse(saved);
       }
     } catch (e) {
       console.warn("Failed to parse user settings, resetting to default.");
-      // If error, clear bad data
       localStorage.removeItem('user_preferences');
     }
-    // Default fallback
     return {
       notifications: { email: true, push: false, reminders: true },
       privacy: { shareData: false, analytics: true },
@@ -63,13 +60,14 @@ const SettingsPage = () => {
 
   const languageOptions = [
     { value: 'en', label: 'English' },
-    { value: 'es', label: 'Español' },
-    { value: 'fr', label: 'Français' },
-    { value: 'hi', label: 'Hindi' }
+    { value: 'hi', label: 'हिन्दी' },
+    { value: 'kn', label: 'ಕನ್ನಡ' },
+    { value: 'ta', label: 'தமிழ்' },
+    { value: 'te', label: 'తెలుగు' },
+    { value: 'ja', label: '日本語' }
   ];
 
   const handleSaveProfile = () => {
-    // In a real app, send update to Clerk here
     toast({
       title: "Profile Saved",
       description: "Your preferences have been updated locally.",
@@ -124,7 +122,6 @@ const SettingsPage = () => {
     }
   };
 
-  // Prevent rendering if Clerk isn't ready (prevents null crashes)
   if (!isLoaded) {
     return <div className="flex h-[50vh] items-center justify-center text-muted-foreground">Loading settings...</div>;
   }
