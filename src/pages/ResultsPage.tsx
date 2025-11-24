@@ -23,7 +23,39 @@ import { ReportView } from "@/components/ReportView";
 import { Feedback } from "@/components/Feedback";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
+// ... (Keep your existing imports)
+import { useUser } from "@clerk/clerk-react";
 
+const ResultsPage: React.FC = () => {
+  const { user } = useUser(); // This might be null now
+  // ... (keep other state)
+
+  // Persist scan locally
+  useEffect(() => {
+    if (!result || saved) return; // Removed "!user" check
+    try {
+      const rec = {
+        id: uuidv4(),
+        timestamp: new Date().toISOString(),
+        imageDataUrl: imageUrl ?? "",
+        prediction: result.predicted_disease ?? "unknown",
+        probability: result.confidence ?? 0,
+        gradcamDataUrl: result.heatmap_png_base64 ? `data:image/png;base64,${result.heatmap_png_base64}` : undefined,
+        maskDataUrl: result.mask_png_base64 ? `data:image/png;base64,${result.mask_png_base64}` : undefined,
+        notes: "",
+      };
+      
+      // ✅ USE "guest" IF NO USER
+      const userId = user ? user.id : "guest";
+      
+      saveScan(userId, rec);
+      setSaved(true);
+    } catch (err) {
+      console.warn("Failed to save scan:", err);
+    }
+  }, [result, imageUrl, saved, user]);
+
+  // ... (Rest of the file stays exactly the same)
 interface LocationState {
   result: PredictionResult;
   imageUrl: string;
