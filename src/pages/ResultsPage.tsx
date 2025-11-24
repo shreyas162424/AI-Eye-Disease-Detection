@@ -148,7 +148,7 @@ const ResultsPage: React.FC = () => {
           <div><h1 className="text-3xl font-bold">Analysis Results</h1><p className="text-muted-foreground">AI-powered detection</p></div>
         </div>
 
-        <Card className={`shadow-lg border-2 ${isNormal ? "border-green-200 bg-green-50" : "border-yellow-200 bg-yellow-50"}`}>
+        <Card className={`shadow-lg border-2 ${isNormal ? "border-green-200 bg-green-50 text-slate-900" : "border-yellow-200 bg-yellow-50 text-slate-900"}`}>
           <CardHeader><div className="flex items-center gap-3">{isNormal ? <CheckCircle className="h-8 w-8 text-green-600" /> : <AlertCircle className="h-8 w-8 text-yellow-600" />}<div><CardTitle className="text-2xl">{friendlyLabel}</CardTitle><CardDescription>Confidence: {confidence}%</CardDescription></div></div></CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
