@@ -107,13 +107,17 @@ const ResultsPage: React.FC = () => {
   const isNormal = predKey === "normal";
   const confidence = result ? (Number(result.confidence || 0) * 100).toFixed(1) : "0";
 
-  const gradcamSrc = result?.heatmap_png_base64
-  ? `data:image/png;base64,${result.heatmap_png_base64}`
-  : null;
+ const ensureDataUrl = (val?: string | null) => {
+  if (!val) return null;
+  // If it's already a data URL, just return it
+  if (val.startsWith("data:")) return val;
+  // Otherwise, treat it as raw base64
+  return `data:image/png;base64,${val}`;
+};
 
-const maskSrc = result?.mask_png_base64
-  ? `data:image/png;base64,${result.mask_png_base64}`
-  : null;
+const gradcamSrc = ensureDataUrl(result?.heatmap_png_base64 || null);
+const maskSrc = ensureDataUrl(result?.mask_png_base64 || null);
+
 
 
   const probabilities = (result?.probabilities && typeof result.probabilities === "object") ? result.probabilities : {};
