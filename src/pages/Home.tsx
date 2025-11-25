@@ -14,59 +14,59 @@ const Home = () => {
     navigate("/upload");
   };
 
-  // Helper: fetch a file path (your tooling will map /mnt/data/... to a proper URL)
-  const fetchImageAsBase64 = async (path) => {
+  // Function to fetch an image from the public folder and convert it to Base64
+  const fetchImageAsBase64 = async (filename: string): Promise<string> => {
     try {
-      console.debug("[fetchImageAsBase64] fetching:", path);
-      const response = await fetch(path);
+      // In Vercel/Vite, files in 'public' are served at the root '/'
+      const response = await fetch(`/${filename}`);
       if (!response.ok) {
-        console.error("[fetchImageAsBase64] fetch failed:", path, response.status);
+        console.error(`Failed to load demo image: ${filename}`);
         return "";
       }
       const blob = await response.blob();
-      return await new Promise((resolve) => {
+      return new Promise((resolve) => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result); // returns "data:image/png;base64,..."
+        // reader.result contains the full "data:image/png;base64,..." string
+        reader.onloadend = () => resolve(reader.result as string);
         reader.readAsDataURL(blob);
       });
     } catch (error) {
-      console.error("Error loading demo image:", path, error);
+      console.error("Error processing demo image:", error);
       return "";
     }
   };
 
   const handleDemo = async () => {
-    // Local files you uploaded — tooling/environment should make these accessible.
-    const originalImagePath = "/mnt/data/original.jpg";
-    const maskPath = "/mnt/data/mask.png";
-    const gradcamPath = "/mnt/data/gradcam.png";
-
-    // fetch & convert to data URIs
-    const [maskBase64, heatmapBase64] = await Promise.all([
-      fetchImageAsBase64(maskPath),
-      fetchImageAsBase64(gradcamPath),
+    // 1. Fetch local demo images (ensure these are in your 'public' folder)
+    const [maskData, heatmapData] = await Promise.all([
+      fetchImageAsBase64("mask.png"),
+      fetchImageAsBase64("gradcam.png")
     ]);
 
-    // If any fetch failed, use a tiny placeholder instead of crashing
-    const placeholder = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn0B9r5dD6kAAAAASUVORK5CYII=";
-    const demoMask = maskBase64 || placeholder;
-    const demoHeat = heatmapBase64 || placeholder;
+    // 2. Strip the "data:image/png;base64," prefix because your ResultsPage expects RAW base64 strings
+    const cleanBase64 = (dataUrl: string) => dataUrl.split(',')[1] || "";
 
     const demoResult = {
       predicted_disease: "Glaucoma",
       confidence: 0.98,
       probabilities: {
-        Glaucoma: 0.98,
-        Cataract: 0.01,
+        "Glaucoma": 0.98,
+        "Cataract": 0.01,
         "Diabetic Retinopathy": 0.01,
-        Normal: 0.0,
+        "Normal": 0.00
       },
-      heatmap_png_base64: demoHeat, // full data URI (data:image/...)
-      mask_png_base64: demoMask,
+      // The backend returns raw base64 (no prefix), so we simulate that structure
+      heatmap_png_base64: cleanBase64(heatmapData),
+      mask_png_base64: cleanBase64(maskData)
     };
 
-    navigate("/results", {
-      state: { result: demoResult, imageUrl: originalImagePath },
+    // 3. Navigate
+    navigate("/results", { 
+      state: { 
+        result: demoResult,
+        // For the original image, we can just pass the URL directly
+        imageUrl: "/original.jpg" 
+      } 
     });
   };
 
@@ -82,33 +82,21 @@ const Home = () => {
               </span>
               AI-Powered Retinal Screening V2.0
             </div>
-
+            
             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight mb-8 max-w-4xl mx-auto leading-tight">
-              Advanced Eye Care <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
-                Through Artificial Intelligence
-              </span>
+              Advanced Eye Care <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Through Artificial Intelligence</span>
             </h1>
-
+            
             <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-12 leading-relaxed">
               Early detection of Cataract, Glaucoma, and Diabetic Retinopathy using state-of-the-art deep learning algorithms.
             </p>
-
+            
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button
-                size="lg"
-                onClick={handleStart}
-                className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl"
-              >
-                <Upload className="mr-2 h-5 w-5" /> Start Diagnosis
+              <Button size="lg" onClick={handleStart} className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl">
+                <Upload className="mr-2 h-5 w-5" /> {t('analyze_btn') || 'Start Diagnosis'}
               </Button>
-
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={handleDemo}
-                className="h-14 px-8 text-lg rounded-full"
-              >
+              <Button size="lg" variant="outline" onClick={handleDemo} className="h-14 px-8 text-lg rounded-full">
                 <PlayCircle className="mr-2 h-5 w-5" /> View Demo Result
               </Button>
             </div>
@@ -142,4 +130,3 @@ const Home = () => {
 };
 
 export default Home;
-
