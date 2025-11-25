@@ -38,11 +38,19 @@ interface LocationState {
   imageUrl: string;
 }
 
-// --- Helper: Validates and constructs proper Data URIs ---
-const getValidImageSrc = (base64: string | undefined | null): string | null => {
-  if (!base64 || base64.trim().length === 0) return null;
-  if (base64.startsWith("data:image")) return base64;
-  return `data:image/png;base64,${base64.trim()}`;
+// --- Helper: Validates and constructs proper Image Sources ---
+// Now handles both File Paths (/image.png) AND Base64 strings
+const getValidImageSrc = (source: string | undefined | null): string | null => {
+  if (!source || source.trim().length === 0) return null;
+  
+  // If it's a URL path (starts with / or http), use it as is
+  if (source.startsWith("/") || source.startsWith("http")) return source;
+  
+  // If it already has the data header, use it as is
+  if (source.startsWith("data:image")) return source;
+  
+  // Otherwise, assume it's a raw base64 string (from backend) and add header
+  return `data:image/png;base64,${source.trim()}`;
 };
 
 function ImageModal({ src, onClose }: { src: string | null; onClose: () => void }) {
@@ -85,8 +93,9 @@ const ResultsPage: React.FC = () => {
   useEffect(() => {
     if (!result || saved || !isLoaded) return; 
     try {
-      const heatBase64 = result.heatmap_png_base64 || "";
-      const maskBase64 = result.mask_png_base64 || "";
+      // Use the helper to get the correct format for saving
+      const heatSrc = getValidImageSrc(result.heatmap_png_base64);
+      const maskSrc = getValidImageSrc(result.mask_png_base64);
 
       const rec = {
         id: uuidv4(),
@@ -94,8 +103,8 @@ const ResultsPage: React.FC = () => {
         imageDataUrl: imageUrl ?? "",
         prediction: result.predicted_disease ?? "unknown",
         probability: result.confidence ?? 0,
-        gradcamDataUrl: heatBase64 ? `data:image/png;base64,${heatBase64}` : undefined,
-        maskDataUrl: maskBase64 ? `data:image/png;base64,${maskBase64}` : undefined,
+        gradcamDataUrl: heatSrc || undefined,
+        maskDataUrl: maskSrc || undefined,
         notes: "",
       };
       
@@ -117,6 +126,7 @@ const ResultsPage: React.FC = () => {
   const isNormal = predKey === "normal";
   const confidence = result ? (Number(result.confidence || 0) * 100).toFixed(1) : "0";
 
+  // --- SAFE IMAGE SOURCES (Uses new helper) ---
   const gradcamSrc = getValidImageSrc(result?.heatmap_png_base64);
   const maskSrc = getValidImageSrc(result?.mask_png_base64);
 
@@ -147,7 +157,6 @@ const ResultsPage: React.FC = () => {
   const info = diseaseInfo[predKey] ?? diseaseInfo["normal"];
   const chatSystemPrompt = `Medical assistant. Diagnosis: ${friendlyLabel} (${confidence}%). Explain simply.`;
 
-  // Conditional rendering AFTER all hooks
   if (!result) return <div className="flex items-center justify-center min-h-[24rem]"><p className="text-muted-foreground">Loading...</p></div>;
 
   return (
@@ -164,7 +173,7 @@ const ResultsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Result Card - Text Color Fixed */}
+        {/* Main Result Card */}
         <Card className={`shadow-lg border-2 ${
           isNormal 
             ? "border-green-200 bg-green-50 text-slate-900" 
