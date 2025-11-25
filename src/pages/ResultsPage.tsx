@@ -38,6 +38,18 @@ interface LocationState {
   imageUrl: string;
 }
 
+// --- Helper: Validates and constructs proper Data URIs ---
+// Fixes the ERR_INVALID_URL issue by checking for empty strings or bad formats
+const getValidImageSrc = (base64: string | undefined | null): string | null => {
+  if (!base64 || base64.trim().length === 0) return null;
+  
+  // If it already has the header, return it as is
+  if (base64.startsWith("data:image")) return base64;
+  
+  // Otherwise, add the header
+  return `data:image/png;base64,${base64.trim()}`;
+};
+
 function ImageModal({ src, onClose }: { src: string | null; onClose: () => void }) {
   if (!src) return null;
   return (
@@ -78,14 +90,19 @@ const ResultsPage: React.FC = () => {
   useEffect(() => {
     if (!result || saved || !isLoaded) return; 
     try {
+      // Construct safe Base64 strings for saving
+      const heatBase64 = result.heatmap_png_base64 || "";
+      const maskBase64 = result.mask_png_base64 || "";
+
       const rec = {
         id: uuidv4(),
         timestamp: new Date().toISOString(),
         imageDataUrl: imageUrl ?? "",
         prediction: result.predicted_disease ?? "unknown",
         probability: result.confidence ?? 0,
-        gradcamDataUrl: result.heatmap_png_base64 ? `data:image/png;base64,${result.heatmap_png_base64}` : undefined,
-        maskDataUrl: result.mask_png_base64 ? `data:image/png;base64,${result.mask_png_base64}` : undefined,
+        // Store Full Data URI
+        gradcamDataUrl: heatBase64 ? `data:image/png;base64,${heatBase64}` : undefined,
+        maskDataUrl: maskBase64 ? `data:image/png;base64,${maskBase64}` : undefined,
         notes: "",
       };
       
@@ -107,8 +124,9 @@ const ResultsPage: React.FC = () => {
   const isNormal = predKey === "normal";
   const confidence = result ? (Number(result.confidence || 0) * 100).toFixed(1) : "0";
 
-  const gradcamSrc = result?.heatmap_png_base64 ? `data:image/png;base64,${result.heatmap_png_base64}` : null;
-  const maskSrc = result?.mask_png_base64 ? `data:image/png;base64,${result.mask_png_base64}` : null;
+  // --- SAFE IMAGE SOURCES ---
+  const gradcamSrc = getValidImageSrc(result?.heatmap_png_base64);
+  const maskSrc = getValidImageSrc(result?.mask_png_base64);
 
   const probabilities = (result?.probabilities && typeof result.probabilities === "object") ? result.probabilities : {};
   
@@ -143,36 +161,62 @@ const ResultsPage: React.FC = () => {
     <div className="container mx-auto px-4 py-8 max-w-6xl relative">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="space-y-8">
         
+        {/* Header */}
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="icon" onClick={() => navigate("/upload")}><ArrowLeft className="h-4 w-4" /></Button>
-          <div><h1 className="text-3xl font-bold">Analysis Results</h1><p className="text-muted-foreground">AI-powered detection</p></div>
+          <Button variant="outline" size="icon" onClick={() => navigate("/upload")}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Analysis Results</h1>
+            <p className="text-muted-foreground">AI-powered detection</p>
+          </div>
         </div>
 
-        <Card className={`shadow-lg border-2 ${isNormal ? "border-green-200 bg-green-50 text-slate-900" : "border-yellow-200 bg-yellow-50 text-slate-900"}`}>
-          <CardHeader><div className="flex items-center gap-3">{isNormal ? <CheckCircle className="h-8 w-8 text-green-600" /> : <AlertCircle className="h-8 w-8 text-yellow-600" />}<div><CardTitle className="text-2xl">{friendlyLabel}</CardTitle><CardDescription>Confidence: {confidence}%</CardDescription></div></div></CardHeader>
+        {/* --- MAIN RESULT CARD --- */}
+        <Card className={`shadow-lg border-2 ${
+          isNormal 
+            ? "border-green-200 bg-green-50 text-slate-900" 
+            : "border-yellow-200 bg-yellow-50 text-slate-900"
+        }`}>
+          <CardHeader>
+            <div className="flex items-center gap-3">
+              {isNormal ? <CheckCircle className="h-8 w-8 text-green-600" /> : <AlertCircle className="h-8 w-8 text-yellow-600" />}
+              <div>
+                <CardTitle className="text-2xl font-bold text-slate-900">{t(result.predicted_disease) || friendlyLabel}</CardTitle>
+                <CardDescription className="text-slate-600 font-medium">Confidence: {confidence}% • Analysis completed</CardDescription>
+              </div>
+            </div>
+          </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="space-y-4">
-                 <h3 className="font-semibold">Description</h3><p className="text-sm text-muted-foreground">{info.description}</p>
-                 <h3 className="font-semibold">Severity</h3><Badge variant={isNormal ? "secondary" : "destructive"}>{info.severity}</Badge>
-                 <h3 className="font-semibold">Urgency</h3><p className="text-sm font-medium text-yellow-700">{info.urgency}</p>
+                <h3 className="font-semibold text-slate-900">Description</h3>
+                <p className="text-sm text-slate-700">{info.description}</p>
+
+                <h3 className="font-semibold text-slate-900">Severity Level</h3>
+                <Badge variant={isNormal ? "secondary" : "destructive"}>{info.severity}</Badge>
+
+                <h3 className="font-semibold text-slate-900">Urgency</h3>
+                <p className={`text-sm font-bold ${isNormal ? 'text-green-700' : 'text-yellow-800'}`}>{info.urgency}</p>
               </div>
-              
+
               {/* Compare Slider */}
               {(imageUrl && maskSrc) ? (
                 <div className="space-y-4">
-                  <h3 className="font-semibold flex gap-2"><Info size={16} /> Lesion Segmentation</h3>
+                  <h3 className="font-semibold flex gap-2 text-slate-900"><Info size={16} /> Lesion Detection</h3>
                   <CompareSlider original={imageUrl} overlay={maskSrc} />
-                  <Button variant="ghost" size="sm" onClick={() => setModalSrc(maskSrc)} className="w-full text-xs"><ZoomIn size={14} className="mr-1"/> View Fullscreen</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setModalSrc(maskSrc)} className="w-full text-xs text-slate-700 hover:bg-slate-200"><ZoomIn size={14} className="mr-1"/> View Fullscreen</Button>
                 </div>
               ) : imageUrl ? (
-                <div className="rounded-lg overflow-hidden border"><img src={imageUrl} alt="Original" className="w-full h-64 object-cover" /></div>
+                <div className="rounded-lg overflow-hidden border border-slate-300">
+                  <img src={imageUrl} alt="Original" className="w-full h-64 object-cover" />
+                </div>
               ) : null}
             </div>
           </CardContent>
         </Card>
 
-        {/* ORIGINAL GRAD-CAM & MASK SECTION (Restored) */}
+        {/* GRAD-CAM & MASK SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
            {/* Grad-CAM Heatmap */}
            {gradcamSrc && (
@@ -182,6 +226,7 @@ const ResultsPage: React.FC = () => {
                 <div className="flex flex-col items-center gap-4">
                   <div className="relative w-full max-w-lg border rounded-lg overflow-hidden">
                     <img src={imageUrl || ""} alt="Original" className="w-full h-auto object-cover" />
+                    {/* Safe Heatmap Overlay */}
                     <img src={gradcamSrc} alt="Heatmap" className="absolute inset-0 w-full h-full object-cover mix-blend-screen pointer-events-none" style={{ opacity }} />
                   </div>
                   <div className="flex flex-col items-center w-full max-w-md">
@@ -208,12 +253,46 @@ const ResultsPage: React.FC = () => {
            )}
         </div>
 
+        {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card><CardHeader><CardTitle className="text-xl">Probability</CardTitle></CardHeader><CardContent><div className="h-64 bg-white p-4 rounded">{hasChartData ? <Bar data={barData} options={{ responsive: true }} /> : <div className="text-center text-sm text-gray-500">No data</div>}</div></CardContent></Card>
-          <Card><CardHeader><CardTitle className="text-xl">Breakdown</CardTitle></CardHeader><CardContent><div className="h-64 bg-white p-4 rounded flex justify-center">{hasChartData ? <Pie data={pieData} options={{ responsive: true }} /> : <div className="text-center text-sm text-gray-500">No data</div>}</div></CardContent></Card>
+          <Card className="bg-white border-slate-200">
+            <CardHeader><CardTitle className="text-xl text-slate-900">Probability</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-64 p-4 rounded">
+                {hasChartData ? <Bar data={barData} options={{ responsive: true, maintainAspectRatio: false }} /> : <div className="text-center text-sm text-gray-500">No data</div>}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-white border-slate-200">
+            <CardHeader><CardTitle className="text-xl text-slate-900">Breakdown</CardTitle></CardHeader>
+            <CardContent>
+              <div className="h-64 p-4 rounded flex justify-center">
+                {hasChartData ? <Pie data={pieData} options={{ responsive: true, maintainAspectRatio: false }} /> : <div className="text-center text-sm text-gray-500">No data</div>}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <Card><CardHeader><CardTitle>Recommendations</CardTitle></CardHeader><CardContent><ul className="space-y-2">{info.recommendations?.map((r: string, i: number) => (<li key={i} className="flex items-start gap-2"><CheckCircle className="h-4 w-4 text-green-600 mt-0.5" /><span className="text-sm">{r}</span></li>))}</ul><Separator className="my-4" /><div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"><Button variant="outline" className="w-full"><MapPin className="h-4 w-4 mr-2" /> Find Specialists</Button><Button variant="outline" className="w-full"><Calendar className="h-4 w-4 mr-2" /> Book Appointment</Button><Button variant="outline" className="w-full" onClick={() => navigator.share?.()}><Share2 className="h-4 w-4 mr-2" /> Share Results</Button></div></CardContent></Card>
+        {/* Recommendations */}
+        <Card>
+          <CardHeader><CardTitle>Recommendations</CardTitle></CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {info.recommendations?.map((r: string, i: number) => (
+                <li key={i} className="flex items-start gap-2">
+                  <CheckCircle className="h-4 w-4 text-green-600 mt-0.5" />
+                  <span className="text-sm text-slate-600">{r}</span>
+                </li>
+              ))}
+            </ul>
+            <Separator className="my-4" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <Button variant="outline" className="w-full"><MapPin className="h-4 w-4 mr-2" /> Find Specialists</Button>
+              <Button variant="outline" className="w-full"><Calendar className="h-4 w-4 mr-2" /> Book Appointment</Button>
+              <Button variant="outline" className="w-full" onClick={() => navigator.share?.()}><Share2 className="h-4 w-4 mr-2" /> Share Results</Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {imageUrl && <ReportView result={result} patientName={user?.fullName || "Patient"} originalImage={imageUrl} />}
         <Feedback />
