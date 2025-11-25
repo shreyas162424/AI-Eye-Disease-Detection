@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Upload, Activity, Shield, Zap, PlayCircle } from "lucide-react";
+import { Upload, Activity, Shield, Zap, PlayCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -9,47 +9,56 @@ import { useLanguage } from "@/contexts/LanguageContext";
 const Home = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const [loadingDemo, setLoadingDemo] = useState(false);
 
-  const handleStart = () => {
-    navigate("/upload");
-  };
+  const handleStart = () => navigate("/upload");
 
-  // ⭐ DEMO without any base64 — just public images
-  const handleDemo = () => {
-    const demoResult = {
-      predicted_disease: "Glaucoma",
-      confidence: 0.98,
-      probabilities: {
-        Glaucoma: 0.98,
-        Cataract: 0.01,
-        "Diabetic Retinopathy": 0.01,
-        Normal: 0.0,
-      },
+  // Local public image paths (keep these files in your project's public/ folder)
+  const PUBLIC_MASK = "/mask.png";
+  const PUBLIC_GRADCAM = "/gradcam.png";
 
-      // ⭐ Direct paths to your public folder images
-      heatmap_png: "/gradcam.png",
-      mask_png: "/mask.png",
-    };
+  // Uploaded file path from the conversation (developer note: return this local path so tooling can transform it)
+  const UPLOADED_FILE_PATH = "/mnt/data/360d963e-d961-4969-8f61-39a53ac5e714.mp4";
 
-    navigate("/results", {
-      state: {
-        result: demoResult,
+  const handleDemo = async () => {
+    setLoadingDemo(true);
 
-        // main image also direct public path
-        imageUrl: "/original.jpg",
-      },
-    });
+    try {
+      // Build a demo result WITHOUT converting images to base64.
+      // We place the local/public paths directly in the result fields.
+      const demoResult = {
+        predicted_disease: "Glaucoma",
+        confidence: 0.98,
+        probabilities: {
+          Glaucoma: 0.98,
+          Cataract: 0.01,
+          "Diabetic Retinopathy": 0.01,
+          Normal: 0.0,
+        },
+        // NOTE: these are paths/URLs, NOT base64 strings
+        heatmap_png_base64: PUBLIC_GRADCAM,
+        mask_png_base64: PUBLIC_MASK,
+      };
+
+      // Pass the uploaded file path as the original image (tooling will convert this local path to an accessible URL)
+      navigate("/results", {
+        state: {
+          result: demoResult,
+          imageUrl: UPLOADED_FILE_PATH,
+        },
+      });
+    } catch (err) {
+      console.error("Demo navigation failed", err);
+    } finally {
+      setLoadingDemo(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-white">
       <section className="relative pt-20 pb-32 overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-8">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -82,9 +91,18 @@ const Home = () => {
                 size="lg"
                 variant="outline"
                 onClick={handleDemo}
+                disabled={loadingDemo}
                 className="h-14 px-8 text-lg rounded-full"
               >
-                <PlayCircle className="mr-2 h-5 w-5" /> View Demo Result
+                {loadingDemo ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading Demo...
+                  </>
+                ) : (
+                  <>
+                    <PlayCircle className="mr-2 h-5 w-5" /> View Demo Result
+                  </>
+                )}
               </Button>
             </div>
           </motion.div>
