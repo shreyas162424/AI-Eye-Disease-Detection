@@ -1,7 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Upload, Activity, Shield, Zap, PlayCircle } from "lucide-react";
+import { Upload, Activity, Shield, Zap, PlayCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -9,65 +9,76 @@ import { useLanguage } from "@/contexts/LanguageContext";
 const Home = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const [loadingDemo, setLoadingDemo] = useState(false);
 
   const handleStart = () => {
     navigate("/upload");
   };
 
-  // Function to fetch an image from the public folder and convert it to Base64
-  const fetchImageAsBase64 = async (filename: string): Promise<string> => {
+  // Helper: Fetches a file from the public folder and converts it to Base64
+  const fetchImageAsBase64 = async (path: string): Promise<string> => {
     try {
-      // In Vercel/Vite, files in 'public' are served at the root '/'
-      const response = await fetch(`/${filename}`);
+      const response = await fetch(path);
       if (!response.ok) {
-        console.error(`Failed to load demo image: ${filename}`);
+        console.error(`[Demo] Failed to load image: ${path}`);
         return "";
       }
       const blob = await response.blob();
       return new Promise((resolve) => {
         const reader = new FileReader();
-        // reader.result contains the full "data:image/png;base64,..." string
         reader.onloadend = () => resolve(reader.result as string);
         reader.readAsDataURL(blob);
       });
     } catch (error) {
-      console.error("Error processing demo image:", error);
+      console.error("[Demo] Error loading image:", path, error);
       return "";
     }
   };
 
   const handleDemo = async () => {
-    // 1. Fetch local demo images (ensure these are in your 'public' folder)
-    const [maskData, heatmapData] = await Promise.all([
-      fetchImageAsBase64("mask.png"),
-      fetchImageAsBase64("gradcam.png")
-    ]);
+    setLoadingDemo(true);
+    try {
+      // 1. Fetch local images from the public folder
+      // IMPORTANT: Ensure these files exist in your 'public' folder!
+      const [maskData, heatmapData] = await Promise.all([
+        fetchImageAsBase64("/mask.png"),
+        fetchImageAsBase64("/gradcam.png")
+      ]);
 
-    // 2. Strip the "data:image/png;base64," prefix because your ResultsPage expects RAW base64 strings
-    const cleanBase64 = (dataUrl: string) => dataUrl.split(',')[1] || "";
+      // 2. Clean the Base64 string (remove "data:image/png;base64," prefix)
+      // because the ResultsPage might add it again, or we can pass the full string 
+      // if the ResultsPage supports it. 
+      // Based on your ResultsPage logic, passing the raw base64 part is safest if it adds the header manually.
+      // But your updated logic handles both. Let's strip it to be safe for the backend-style format.
+      const cleanBase64 = (dataUrl: string) => dataUrl.split(',')[1] || "";
 
-    const demoResult = {
-      predicted_disease: "Glaucoma",
-      confidence: 0.98,
-      probabilities: {
-        "Glaucoma": 0.98,
-        "Cataract": 0.01,
-        "Diabetic Retinopathy": 0.01,
-        "Normal": 0.00
-      },
-      // The backend returns raw base64 (no prefix), so we simulate that structure
-      heatmap_png_base64: cleanBase64(heatmapData),
-      mask_png_base64: cleanBase64(maskData)
-    };
+      const demoResult = {
+        predicted_disease: "Glaucoma",
+        confidence: 0.98,
+        probabilities: {
+          "Glaucoma": 0.98,
+          "Cataract": 0.01,
+          "Diabetic Retinopathy": 0.01,
+          "Normal": 0.00
+        },
+        heatmap_png_base64: cleanBase64(heatmapData),
+        mask_png_base64: cleanBase64(maskData)
+      };
 
-    // 3. Navigate
-    navigate("/results", { 
-      state: { 
-        result: demoResult,
-        // For the original image, we can just pass the URL directly
-        imageUrl: "/original.jpg" 
-      } 
-    });
+      // 3. Navigate
+      navigate("/results", { 
+        state: { 
+          result: demoResult,
+          // Original image can be passed as a direct URL since it's just an <img> tag
+          imageUrl: "/original.jpg" 
+        } 
+      });
+
+    } catch (error) {
+      console.error("Demo failed", error);
+    } finally {
+      setLoadingDemo(false);
+    }
   };
 
   return (
@@ -96,8 +107,18 @@ const Home = () => {
               <Button size="lg" onClick={handleStart} className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl">
                 <Upload className="mr-2 h-5 w-5" /> {t('analyze_btn') || 'Start Diagnosis'}
               </Button>
-              <Button size="lg" variant="outline" onClick={handleDemo} className="h-14 px-8 text-lg rounded-full">
-                <PlayCircle className="mr-2 h-5 w-5" /> View Demo Result
+              <Button 
+                size="lg" 
+                variant="outline" 
+                onClick={handleDemo} 
+                disabled={loadingDemo}
+                className="h-14 px-8 text-lg rounded-full"
+              >
+                {loadingDemo ? (
+                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading Demo...</>
+                ) : (
+                    <><PlayCircle className="mr-2 h-5 w-5" /> View Demo Result</>
+                )}
               </Button>
             </div>
           </motion.div>
