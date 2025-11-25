@@ -76,7 +76,7 @@ const translations: Translations = {
     te: 'AI విశ్లేషణ కోసం రెటీనా చిత్రాన్ని అప్‌లోడ్ చేయండి.',
     ja: 'AI分析のために眼底画像をアップロードしてください。'
   },
-  analyze_button: {
+  analyze_btn: {
     en: 'Analyze Image',
     hi: 'छवि का विश्लेषण करें',
     kn: 'ಚಿತ್ರ ವಿಶ್ಲೇಷಿಸಿ',
