@@ -1,3 +1,4 @@
+// resultspage.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -91,21 +92,19 @@ const ResultsPage: React.FC = () => {
   const [modalSrc, setModalSrc] = useState<string | null>(null);
   const [opacity, setOpacity] = useState<number>(0.55);
 
-  // === Developer-specified uploaded file fallback (from conversation history)
-  // Your tooling will convert this local path to a usable URL when the app runs.
-  const UPLOADED_LOCAL_FILE = "/mnt/data/360d963e-d961-4969-8f61-39a53ac5e714.mp4";
+  // === FALLBACK: public original image so this works on Vercel / static hosts
+  // Put original.jpg in your project's public/ folder (public/original.jpg)
+  const PUBLIC_FALLBACK_ORIGINAL = "/original.jpg";
 
   useEffect(() => {
     const state = (location.state as LocationState | undefined);
     if (state?.result) {
       setResult(state.result);
-      // prefer provided imageUrl, otherwise fallback to the uploaded local file
-      setImageUrl(state.imageUrl ?? UPLOADED_LOCAL_FILE);
+      // prefer provided imageUrl, otherwise fallback to public original
+      setImageUrl(state.imageUrl ?? PUBLIC_FALLBACK_ORIGINAL);
     } else {
-      // If no state, we still set fallback to uploaded file so page can render for preview/testing
-      // (If you want strict redirect, uncomment the navigate line below)
-      // navigate("/upload", { replace: true });
-      setImageUrl(UPLOADED_LOCAL_FILE);
+      // If no state, still set fallback to public original so the page renders for preview/testing
+      setImageUrl(PUBLIC_FALLBACK_ORIGINAL);
     }
   }, [location.state, navigate]);
 
