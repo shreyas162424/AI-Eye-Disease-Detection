@@ -10,47 +10,45 @@ const Home = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const handleStart = () => navigate("/upload");
+  const handleStart = () => {
+    navigate("/upload");
+  };
 
-  // Robust helper: fetch a file from public folder and convert to data URI.
-  // Uses process.env.PUBLIC_URL for correct base in some build setups.
-  const fetchImageAsBase64 = async (relativePath) => {
+  // Helper: fetch a local file path (your /mnt/data/... file) and convert it to a data URI
+  // Returns a full data URI like "data:image/png;base64,...."
+  const fetchImageAsBase64 = async (path) => {
     try {
-      const base = process.env.PUBLIC_URL || "";
-      const url = `${base}${relativePath.startsWith("/") ? "" : "/"}${relativePath}`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        console.warn(`fetchImageAsBase64: ${url} returned ${response.status}`);
+      const res = await fetch(path);
+      if (!res.ok) {
+        console.warn("fetchImageAsBase64: fetch returned non-ok response", res.status, path);
         return "";
       }
-      const contentType = response.headers.get("content-type") || "";
-      if (!contentType.startsWith("image/")) {
-        console.warn(`fetchImageAsBase64: ${url} returned non-image content-type: ${contentType}`);
-        return "";
-      }
-      const blob = await response.blob();
-      return await new Promise((resolve) => {
+      const blob = await res.blob();
+      return await new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result); // data:<type>;base64,...
+        reader.onerror = (e) => reject(e);
+        reader.onloadend = () => resolve(reader.result); // data:<mime>;base64,...
         reader.readAsDataURL(blob);
       });
-    } catch (error) {
-      console.error("Error loading demo image:", relativePath, error);
+    } catch (err) {
+      console.error("Error loading image as base64:", path, err);
       return "";
     }
   };
 
   const handleDemo = async () => {
-    // Paths relative to your public folder. Use PUBLIC_URL if deployed under a subpath.
-    const originalImagePath = "/original.jpg"; // used as imageUrl (path)
-    const maskPath = "/mask.png";
-    const heatmapPath = "/gradcam.png";
+    // Use the uploaded image path in the container. Your tooling will map this to a URL.
+    // Developer-provided file path:
+    const localImagePath = "/mnt/data/bdc03f08-e79c-4831-bcb2-c2045ecc4583.png";
 
-    // Try to load mask & heatmap as base64 — fall back to empty string if not available.
-    const [maskBase64, heatmapBase64] = await Promise.all([
-      fetchImageAsBase64(maskPath),
-      fetchImageAsBase64(heatmapPath),
-    ]);
+    // Fetch the local file and convert to data URIs for heatmap and mask.
+    // If you have separate mask/gradcam images, replace these two with their respective paths.
+    const heatmapDataUri = await fetchImageAsBase64(localImagePath);
+    const maskDataUri = await fetchImageAsBase64(localImagePath);
+
+    // If conversion failed, fall back to a small placeholder 1x1 pixel (so UI won't break)
+    const placeholder1x1 =
+      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M/wHwAF/gKqk1q2AAAAAElFTkSuQmCC";
 
     const demoResult = {
       predicted_disease: "Glaucoma",
@@ -61,14 +59,16 @@ const Home = () => {
         "Diabetic Retinopathy": 0.01,
         Normal: 0.0,
       },
-      heatmap_png_base64: heatmapBase64, // may be "" if load failed
-      mask_png_base64: maskBase64,       // may be "" if load failed
+      // Use the full data URIs so the Results page can display them directly
+      heatmap_png_base64: heatmapDataUri || placeholder1x1,
+      mask_png_base64: maskDataUri || placeholder1x1,
     };
 
+    // Pass the local path as imageUrl — your deployment/tooling should convert this to a proper URL.
     navigate("/results", {
       state: {
         result: demoResult,
-        imageUrl: originalImagePath, // keep direct path for the original image
+        imageUrl: localImagePath,
       },
     });
   };
@@ -80,15 +80,17 @@ const Home = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-8">
               <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
               </span>
               AI-Powered Retinal Screening V2.0
             </div>
 
             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight mb-8 max-w-4xl mx-auto leading-tight">
               Advanced Eye Care <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Through Artificial Intelligence</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                Through Artificial Intelligence
+              </span>
             </h1>
 
             <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-12 leading-relaxed">
@@ -99,7 +101,6 @@ const Home = () => {
               <Button size="lg" onClick={handleStart} className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl">
                 <Upload className="mr-2 h-5 w-5" /> {t("analyze_btn") || "Start Diagnosis"}
               </Button>
-
               <Button size="lg" variant="outline" onClick={handleDemo} className="h-14 px-8 text-lg rounded-full">
                 <PlayCircle className="mr-2 h-5 w-5" /> View Demo Result
               </Button>
