@@ -14,35 +14,56 @@ const Home = () => {
     navigate("/upload");
   };
 
-  const handleDemo = () => {
-
-    // --- USE IMAGES FROM PUBLIC FOLDER ---
-    const originalImage = "/original.jpg";
-    const heatmapImage = "/gradcam.png";
-    const maskImage = "/mask.png";
-
-    const demoResult = {
-      predicted_disease: "Glaucoma",
-      confidence: 0.98,
-      probabilities: {
-        "Glaucoma": 0.98,
-        "Cataract": 0.01,
-        "Diabetic Retinopathy": 0.01,
-        "Normal": 0.00
-      },
-
-      // Pass images directly as URLs (React will load from /public correctly)
-      heatmap_png_base64: heatmapImage,
-      mask_png_base64: maskImage
-    };
-
-    navigate("/results", {
-      state: {
-        result: demoResult,
-        imageUrl: originalImage
-      }
+ // inside Home component
+const fetchImageAsBase64 = async (path) => {
+  try {
+    const response = await fetch(path);
+    const blob = await response.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result); // full data URI: "data:image/png;base64,..."
+      reader.readAsDataURL(blob);
     });
+  } catch (error) {
+    console.error("Error loading demo image:", path, error);
+    return "";
+  }
+};
+
+const handleDemo = async () => {
+  // Use the uploaded local file paths (we include sandbox:/ prefix per your dev instruction)
+  const originalImagePath = "sandbox:/mnt/data/original.jpg";
+  const maskPath = "sandbox:/mnt/data/mask.png";
+  const gradcamPath = "sandbox:/mnt/data/gradcam.png";
+
+  // fetch and convert to proper data URIs (data:image/png;base64,...)
+  const maskBase64 = await fetchImageAsBase64(maskPath);
+  const heatmapBase64 = await fetchImageAsBase64(gradcamPath);
+
+  // demo result (these fields match how your Results page expects them)
+  const demoResult = {
+    predicted_disease: "Glaucoma",
+    confidence: 0.98,
+    probabilities: {
+      Glaucoma: 0.98,
+      Cataract: 0.01,
+      "Diabetic Retinopathy": 0.01,
+      Normal: 0.0,
+    },
+    // pass the full data URI strings returned from fetchImageAsBase64
+    heatmap_png_base64: heatmapBase64, // e.g. "data:image/png;base64,...."
+    mask_png_base64: maskBase64,
   };
+
+  navigate("/results", {
+    state: {
+      result: demoResult,
+      // use the original image path for display (will be transformed by your environment)
+      imageUrl: originalImagePath,
+    },
+  });
+};
+
 
   return (
     <div className="min-h-screen bg-white">
