@@ -34,15 +34,15 @@ const Home = () => {
   const handleDemo = async () => {
     // --- 1. LOAD IMAGES FROM PUBLIC FOLDER ---
     // Ensure you have these files in your /public/demo/ folder
-    const originalImagePath = "/demo/original.jpg"; 
+    const originalImagePath = "/original.jpg"; 
     
     // Fetch and convert the mask and heatmap to Base64 strings
     // We strip the "data:image/png;base64," prefix if your backend usually sends raw base64 strings,
     // otherwise, keep the result as is depending on how your Results page handles it.
     // Here we assume the Results page handles full data URIs or raw base64.
     // For this example, we pass the full data URI.
-    const maskBase64 = await fetchImageAsBase64("/demo/mask.png");
-    const heatmapBase64 = await fetchImageAsBase64("/demo/gradcam.png");
+    const maskBase64 = await fetchImageAsBase64("/mask.png");
+    const heatmapBase64 = await fetchImageAsBase64("/gradcam.png");
 
     // --- 2. REALISTIC DEMO RESULT ---
     const demoResult = {
