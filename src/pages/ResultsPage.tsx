@@ -39,14 +39,9 @@ interface LocationState {
 }
 
 // --- Helper: Validates and constructs proper Data URIs ---
-// Fixes the ERR_INVALID_URL issue by checking for empty strings or bad formats
 const getValidImageSrc = (base64: string | undefined | null): string | null => {
   if (!base64 || base64.trim().length === 0) return null;
-  
-  // If it already has the header, return it as is
   if (base64.startsWith("data:image")) return base64;
-  
-  // Otherwise, add the header
   return `data:image/png;base64,${base64.trim()}`;
 };
 
@@ -74,7 +69,7 @@ const ResultsPage: React.FC = () => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [modalSrc, setModalSrc] = useState<string | null>(null);
-  const [opacity, setOpacity] = useState<number>(0.55); // Heatmap opacity state
+  const [opacity, setOpacity] = useState<number>(0.55); 
 
   useEffect(() => {
     const state = location.state as LocationState | undefined;
@@ -90,7 +85,6 @@ const ResultsPage: React.FC = () => {
   useEffect(() => {
     if (!result || saved || !isLoaded) return; 
     try {
-      // Construct safe Base64 strings for saving
       const heatBase64 = result.heatmap_png_base64 || "";
       const maskBase64 = result.mask_png_base64 || "";
 
@@ -100,7 +94,6 @@ const ResultsPage: React.FC = () => {
         imageDataUrl: imageUrl ?? "",
         prediction: result.predicted_disease ?? "unknown",
         probability: result.confidence ?? 0,
-        // Store Full Data URI
         gradcamDataUrl: heatBase64 ? `data:image/png;base64,${heatBase64}` : undefined,
         maskDataUrl: maskBase64 ? `data:image/png;base64,${maskBase64}` : undefined,
         notes: "",
@@ -124,7 +117,6 @@ const ResultsPage: React.FC = () => {
   const isNormal = predKey === "normal";
   const confidence = result ? (Number(result.confidence || 0) * 100).toFixed(1) : "0";
 
-  // --- SAFE IMAGE SOURCES ---
   const gradcamSrc = getValidImageSrc(result?.heatmap_png_base64);
   const maskSrc = getValidImageSrc(result?.mask_png_base64);
 
@@ -146,7 +138,7 @@ const ResultsPage: React.FC = () => {
   }), [chartLabels, chartValues]);
 
   const diseaseInfo: Record<string, any> = {
-    normal: { title: "Normal", description: "No signs of eye disease detected.", severity: "None", color: "text-green-600", urgency: "Routine follow-up", recommendations: ["Regular check-ups", "UV protection"] },
+    normal: { title: "Normal", description: "No signs of eye disease detected. Your retinal scan appears healthy.", severity: "None", color: "text-green-600", urgency: "Routine follow-up", recommendations: ["Regular check-ups", "UV protection"] },
     cataract: { title: "Cataract", description: "Clouding of the lens.", severity: "Moderate", color: "text-amber-500", urgency: "Consult in 2-4 weeks", recommendations: ["Ophthalmologist visit", "Surgery evaluation"] },
     glaucoma: { title: "Glaucoma", description: "Optic nerve damage.", severity: "High", color: "text-red-600", urgency: "Seek consultation 1-2 weeks", recommendations: ["Immediate referral", "Eye drops"] },
     diabetic_retinopathy: { title: "Diabetic Retinopathy", description: "Retinal blood vessel damage.", severity: "Moderate-Severe", color: "text-red-500", urgency: "Consult 1-2 weeks", recommendations: ["Retina specialist", "Blood sugar control"] },
@@ -155,13 +147,13 @@ const ResultsPage: React.FC = () => {
   const info = diseaseInfo[predKey] ?? diseaseInfo["normal"];
   const chatSystemPrompt = `Medical assistant. Diagnosis: ${friendlyLabel} (${confidence}%). Explain simply.`;
 
+  // Conditional rendering AFTER all hooks
   if (!result) return <div className="flex items-center justify-center min-h-[24rem]"><p className="text-muted-foreground">Loading...</p></div>;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl relative">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="space-y-8">
         
-        {/* Header */}
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon" onClick={() => navigate("/upload")}>
             <ArrowLeft className="h-4 w-4" />
@@ -172,7 +164,7 @@ const ResultsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* --- MAIN RESULT CARD --- */}
+        {/* Main Result Card - Text Color Fixed */}
         <Card className={`shadow-lg border-2 ${
           isNormal 
             ? "border-green-200 bg-green-50 text-slate-900" 
@@ -216,9 +208,8 @@ const ResultsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* GRAD-CAM & MASK SECTION */}
+        {/* Grad-CAM and Mask */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-           {/* Grad-CAM Heatmap */}
            {gradcamSrc && (
             <Card>
               <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Info className="h-5 w-5" /> AI Focus Heatmap</CardTitle></CardHeader>
@@ -226,7 +217,6 @@ const ResultsPage: React.FC = () => {
                 <div className="flex flex-col items-center gap-4">
                   <div className="relative w-full max-w-lg border rounded-lg overflow-hidden">
                     <img src={imageUrl || ""} alt="Original" className="w-full h-auto object-cover" />
-                    {/* Safe Heatmap Overlay */}
                     <img src={gradcamSrc} alt="Heatmap" className="absolute inset-0 w-full h-full object-cover mix-blend-screen pointer-events-none" style={{ opacity }} />
                   </div>
                   <div className="flex flex-col items-center w-full max-w-md">
@@ -238,7 +228,6 @@ const ResultsPage: React.FC = () => {
             </Card>
            )}
 
-           {/* Segmentation Mask */}
            {maskSrc && (
             <Card>
               <CardHeader><CardTitle className="text-xl flex items-center gap-2"><Info className="h-5 w-5" /> Lesion Mask</CardTitle></CardHeader>
