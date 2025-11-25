@@ -36,8 +36,7 @@ const Home = () => {
   };
 
   const handleDemo = async () => {
-    // Use the local paths (these were present in the conversation history)
-    // Your deployment/tooling is expected to convert these local paths into usable URLs.
+    // Local files you uploaded — tooling/environment should make these accessible.
     const originalImagePath = "/mnt/data/original.jpg";
     const maskPath = "/mnt/data/mask.png";
     const gradcamPath = "/mnt/data/gradcam.png";
@@ -48,40 +47,11 @@ const Home = () => {
       fetchImageAsBase64(gradcamPath),
     ]);
 
-    // debug - check what we received
-    console.debug("maskBase64 prefix:", maskBase64 ? maskBase64.slice(0,40) : "<EMPTY>");
-    console.debug("heatmapBase64 prefix:", heatmapBase64 ? heatmapBase64.slice(0,40) : "<EMPTY>");
+    // If any fetch failed, use a tiny placeholder instead of crashing
+    const placeholder = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn0B9r5dD6kAAAAASUVORK5CYII=";
+    const demoMask = maskBase64 || placeholder;
+    const demoHeat = heatmapBase64 || placeholder;
 
-    // if fetch failed, optionally fallback to small placeholder base64 or abort
-    if (!maskBase64 || !heatmapBase64) {
-      console.warn("One or more demo assets failed to load. Using placeholder images.");
-      // optional: use tiny placeholder 1x1 px base64 (you can replace this with your own)
-      const placeholder =
-        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8Xw8AAn0B9r5dD6kAAAAASUVORK5CYII=";
-      // set whichever is empty to placeholder
-      const demoMask = maskBase64 || placeholder;
-      const demoHeat = heatmapBase64 || placeholder;
-
-      const demoResult = {
-        predicted_disease: "Glaucoma",
-        confidence: 0.98,
-        probabilities: {
-          Glaucoma: 0.98,
-          Cataract: 0.01,
-          "Diabetic Retinopathy": 0.01,
-          Normal: 0.0,
-        },
-        heatmap_png_base64: demoHeat,
-        mask_png_base64: demoMask,
-      };
-
-      navigate("/results", {
-        state: { result: demoResult, imageUrl: originalImagePath },
-      });
-      return;
-    }
-
-    // normal flow: we have both images
     const demoResult = {
       predicted_disease: "Glaucoma",
       confidence: 0.98,
@@ -91,8 +61,8 @@ const Home = () => {
         "Diabetic Retinopathy": 0.01,
         Normal: 0.0,
       },
-      heatmap_png_base64: heatmapBase64, // full data URI
-      mask_png_base64: maskBase64, // full data URI
+      heatmap_png_base64: demoHeat, // full data URI (data:image/...)
+      mask_png_base64: demoMask,
     };
 
     navigate("/results", {
@@ -125,11 +95,20 @@ const Home = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" onClick={handleStart} className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl">
-                <Upload className="mr-2 h-5 w-5" /> {t("analyze_btn") || "Start Diagnosis"}
+              <Button
+                size="lg"
+                onClick={handleStart}
+                className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl"
+              >
+                <Upload className="mr-2 h-5 w-5" /> Start Diagnosis
               </Button>
 
-              <Button size="lg" variant="outline" onClick={handleDemo} className="h-14 px-8 text-lg rounded-full">
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={handleDemo}
+                className="h-14 px-8 text-lg rounded-full"
+              >
                 <PlayCircle className="mr-2 h-5 w-5" /> View Demo Result
               </Button>
             </div>
@@ -163,3 +142,4 @@ const Home = () => {
 };
 
 export default Home;
+
