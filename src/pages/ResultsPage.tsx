@@ -84,8 +84,8 @@ const ResultsPage: React.FC = () => {
         imageDataUrl: imageUrl ?? "",
         prediction: result.predicted_disease ?? "unknown",
         probability: result.confidence ?? 0,
-        gradcamDataUrl: result.heatmap_png_base64 ? `data:image/png;base64,${result.heatmap_png_base64}` : undefined,
-        maskDataUrl: result.mask_png_base64 ? `data:image/png;base64,${result.mask_png_base64}` : undefined,
+        gradcamDataUrl: result.heatmap_png_base64 ? data:image/png;base64,${result.heatmap_png_base64} : undefined,
+        maskDataUrl: result.mask_png_base64 ? data:image/png;base64,${result.mask_png_base64} : undefined,
         notes: "",
       };
       
@@ -99,7 +99,7 @@ const ResultsPage: React.FC = () => {
 
   const normalizePredKey = (s?: string | null) => {
     if (!s) return "normal";
-    return String(s).trim().toLowerCase().replace(/[-\s]+/g, "_").replace(/[^\w_]/g, "");
+    return String(s).trim().toLowerCase().replace(/[-\s]+/g, "").replace(/[^\w]/g, "");
   };
 
   const predKey = result ? normalizePredKey(result.predicted_disease) : "normal";
@@ -107,8 +107,8 @@ const ResultsPage: React.FC = () => {
   const isNormal = predKey === "normal";
   const confidence = result ? (Number(result.confidence || 0) * 100).toFixed(1) : "0";
 
-  const gradcamSrc = result?.heatmap_png_base64 ? `data:image/png;base64,${result.heatmap_png_base64}` : null;
-  const maskSrc = result?.mask_png_base64 ? `data:image/png;base64,${result.mask_png_base64}` : null;
+  const gradcamSrc = result?.heatmap_png_base64 ? data:image/png;base64,${result.heatmap_png_base64} : null;
+  const maskSrc = result?.mask_png_base64 ? data:image/png;base64,${result.mask_png_base64} : null;
 
   const probabilities = (result?.probabilities && typeof result.probabilities === "object") ? result.probabilities : {};
   
@@ -135,7 +135,7 @@ const ResultsPage: React.FC = () => {
   };
 
   const info = diseaseInfo[predKey] ?? diseaseInfo["normal"];
-  const chatSystemPrompt = `Medical assistant. Diagnosis: ${friendlyLabel} (${confidence}%). Explain simply.`;
+  const chatSystemPrompt = Medical assistant. Diagnosis: ${friendlyLabel} (${confidence}%). Explain simply.;
 
   if (!result) return <div className="flex items-center justify-center min-h-[24rem]"><p className="text-muted-foreground">Loading...</p></div>;
 
@@ -148,7 +148,7 @@ const ResultsPage: React.FC = () => {
           <div><h1 className="text-3xl font-bold">Analysis Results</h1><p className="text-muted-foreground">AI-powered detection</p></div>
         </div>
 
-        <Card className={`shadow-lg border-2 ${isNormal ? "border-green-200 bg-green-50 text-slate-900" : "border-yellow-200 bg-yellow-50 text-slate-900"}`}>
+        <Card className={shadow-lg border-2 ${isNormal ? "border-green-200 bg-green-50 text-slate-900" : "border-yellow-200 bg-yellow-50 text-slate-900"}}>
           <CardHeader><div className="flex items-center gap-3">{isNormal ? <CheckCircle className="h-8 w-8 text-green-600" /> : <AlertCircle className="h-8 w-8 text-yellow-600" />}<div><CardTitle className="text-2xl">{friendlyLabel}</CardTitle><CardDescription>Confidence: {confidence}%</CardDescription></div></div></CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
