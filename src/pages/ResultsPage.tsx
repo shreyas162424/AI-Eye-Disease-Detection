@@ -97,10 +97,18 @@ const ResultsPage: React.FC = () => {
     }
   }, [result, imageUrl, saved, user, isLoaded]);
 
-  const normalizePredKey = (s?: string | null) => {
-    if (!s) return "normal";
-    return String(s).trim().toLowerCase().replace(/[-\s]+/g, "").replace(/[^\w]/g, "");
-  };
+ const normalizePredKey = (s?: string | null) => {
+  if (!s) return "normal";
+
+  return String(s)
+    .trim()
+    .toLowerCase()
+    // turn spaces and hyphens into underscores
+    .replace(/[-\s]+/g, "_")
+    // remove any remaining non-word characters
+    .replace(/[^\w]/g, "");
+};
+
 
   const predKey = result ? normalizePredKey(result.predicted_disease) : "normal";
   const friendlyLabel = predKey.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
