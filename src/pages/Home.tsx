@@ -14,12 +14,35 @@ const Home = () => {
     navigate("/upload");
   };
 
-  const handleDemo = () => {
-    // --- 1. DUMMY BASE64 DATA (To make the UI show Heatmaps/Masks) ---
-    // These are small 1x1 pixel images (Blue for Heatmap, Red for Mask)
-    // In a real app, these would be the full outputs from your backend.
-    const mockHeatmap = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPj/HwADBwIAMHb/kwAAAABJRU5ErkJggg==";
-    const mockMask = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
+  // Helper function to convert public folder images to Base64
+  // This simulates the data format a Python backend usually sends
+  const fetchImageAsBase64 = async (path) => {
+    try {
+      const response = await fetch(path);
+      const blob = await response.blob();
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result); // Returns data:image/png;base64,...
+        reader.readAsDataURL(blob);
+      });
+    } catch (error) {
+      console.error("Error loading demo image:", path, error);
+      return "";
+    }
+  };
+
+  const handleDemo = async () => {
+    // --- 1. LOAD IMAGES FROM PUBLIC FOLDER ---
+    // Ensure you have these files in your /public/demo/ folder
+    const originalImagePath = "/demo/original.jpg"; 
+    
+    // Fetch and convert the mask and heatmap to Base64 strings
+    // We strip the "data:image/png;base64," prefix if your backend usually sends raw base64 strings,
+    // otherwise, keep the result as is depending on how your Results page handles it.
+    // Here we assume the Results page handles full data URIs or raw base64.
+    // For this example, we pass the full data URI.
+    const maskBase64 = await fetchImageAsBase64("/demo/mask.png");
+    const heatmapBase64 = await fetchImageAsBase64("/demo/gradcam.png");
 
     // --- 2. REALISTIC DEMO RESULT ---
     const demoResult = {
@@ -31,16 +54,16 @@ const Home = () => {
         "Diabetic Retinopathy": 0.01,
         "Normal": 0.00
       },
-      // Providing data here triggers the "Compare Slider" & "Grad-CAM" cards
-      heatmap_png_base64: mockHeatmap, 
-      mask_png_base64: mockMask
+      // Pass the converted Base64 strings here
+      heatmap_png_base64: heatmapBase64, 
+      mask_png_base64: maskBase64
     };
 
     navigate("/results", { 
       state: { 
         result: demoResult,
-        // Use a reliable online image for the demo so it never fails
-        imageUrl: "https://images.unsplash.com/photo-1579154204601-01588f351e67?auto=format&fit=crop&w=800&q=80"
+        // We pass the direct path for the original image
+        imageUrl: originalImagePath
       } 
     });
   };
