@@ -84,8 +84,8 @@ const ResultsPage: React.FC = () => {
         imageDataUrl: imageUrl ?? "",
         prediction: result.predicted_disease ?? "unknown",
         probability: result.confidence ?? 0,
-        gradcamDataUrl: result.heatmap_png_base64 ? data:image/png;base64,${result.heatmap_png_base64} : undefined,
-        maskDataUrl: result.mask_png_base64 ? data:image/png;base64,${result.mask_png_base64} : undefined,
+        gradcamDataUrl: result.heatmap_png_base64 ? `data:image/png;base64,${result.heatmap_png_base64}` : undefined,
+        maskDataUrl: result.mask_png_base64 ? `data:image/png;base64,${result.mask_png_base64}` : undefined,
         notes: "",
       };
       
