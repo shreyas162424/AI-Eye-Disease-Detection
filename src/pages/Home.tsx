@@ -14,28 +14,30 @@ const Home = () => {
     navigate("/upload");
   };
 
+  // ⭐ DEMO without any base64 — just public images
   const handleDemo = () => {
-    // ✅ CHANGED: We now pass the file paths directly. 
-    // No need to fetch or convert to Base64 here.
     const demoResult = {
       predicted_disease: "Glaucoma",
       confidence: 0.98,
       probabilities: {
-        "Glaucoma": 0.98,
-        "Cataract": 0.01,
+        Glaucoma: 0.98,
+        Cataract: 0.01,
         "Diabetic Retinopathy": 0.01,
-        "Normal": 0.00
+        Normal: 0.0,
       },
-      // Pass the paths to the files in your 'public' folder
-      heatmap_png_base64: "/gradcam.png", 
-      mask_png_base64: "/mask.png"
+
+      // ⭐ Direct paths to your public folder images
+      heatmap_png: "/gradcam.png",
+      mask_png: "/mask.png",
     };
 
-    navigate("/results", { 
-      state: { 
+    navigate("/results", {
+      state: {
         result: demoResult,
-        imageUrl: "/original.jpg" 
-      } 
+
+        // main image also direct public path
+        imageUrl: "/original.jpg",
+      },
     });
   };
 
@@ -43,7 +45,11 @@ const Home = () => {
     <div className="min-h-screen bg-white">
       <section className="relative pt-20 pb-32 overflow-hidden">
         <div className="container mx-auto px-4 text-center relative z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-8">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
@@ -51,25 +57,31 @@ const Home = () => {
               </span>
               AI-Powered Retinal Screening V2.0
             </div>
-            
+
             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight mb-8 max-w-4xl mx-auto leading-tight">
-              Advanced Eye Care <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Through Artificial Intelligence</span>
+              Advanced Eye Care <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+                Through Artificial Intelligence
+              </span>
             </h1>
-            
+
             <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-12 leading-relaxed">
               Early detection of Cataract, Glaucoma, and Diabetic Retinopathy using state-of-the-art deep learning algorithms.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" onClick={handleStart} className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl">
-                <Upload className="mr-2 h-5 w-5" /> {t('analyze_btn') || 'Start Diagnosis'}
+              <Button
+                size="lg"
+                onClick={handleStart}
+                className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl"
+              >
+                <Upload className="mr-2 h-5 w-5" /> {t("analyze_btn") || "Start Diagnosis"}
               </Button>
-              
-              <Button 
-                size="lg" 
-                variant="outline" 
-                onClick={handleDemo} 
+
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={handleDemo}
                 className="h-14 px-8 text-lg rounded-full"
               >
                 <PlayCircle className="mr-2 h-5 w-5" /> View Demo Result
