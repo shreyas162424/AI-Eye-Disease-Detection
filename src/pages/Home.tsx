@@ -11,26 +11,24 @@ const Home = () => {
   const { t } = useLanguage();
   const [loadingDemo, setLoadingDemo] = useState(false);
 
-  const handleStart = () => {
-    navigate("/upload");
-  };
+  const handleStart = () => navigate("/upload");
 
-  // Helper: Fetches a file from the public folder and converts it to Base64
-  const fetchImageAsBase64 = async (path: string): Promise<string> => {
+  // Fetch a public file and convert to a full data URI (data:image/...)
+  const fetchImageAsBase64 = async (path) => {
     try {
       const response = await fetch(path);
       if (!response.ok) {
-        console.error(`[Demo] Failed to load image: ${path}`);
+        console.error(`[Demo] failed to fetch ${path} status=${response.status}`);
         return "";
       }
       const blob = await response.blob();
-      return new Promise((resolve) => {
+      return await new Promise((resolve) => {
         const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
+        reader.onloadend = () => resolve(reader.result); // "data:image/png;base64,...."
         reader.readAsDataURL(blob);
       });
-    } catch (error) {
-      console.error("[Demo] Error loading image:", path, error);
+    } catch (err) {
+      console.error("[Demo] error fetching image", path, err);
       return "";
     }
   };
@@ -38,44 +36,54 @@ const Home = () => {
   const handleDemo = async () => {
     setLoadingDemo(true);
     try {
-      // 1. Fetch local images from the public folder
-      // IMPORTANT: Ensure these files exist in your 'public' folder!
-      const [maskData, heatmapData] = await Promise.all([
-        fetchImageAsBase64("/mask.png"),
-        fetchImageAsBase64("/gradcam.png")
+      // These must be in your project's public/ folder
+      const originalUrl = "/original.jpg";
+      const maskUrl = "/mask.png";
+      const gradcamUrl = "/gradcam.png";
+
+      const [maskDataUrl, gradcamDataUrl] = await Promise.all([
+        fetchImageAsBase64(maskUrl),
+        fetchImageAsBase64(gradcamUrl),
       ]);
 
-      // 2. Clean the Base64 string (remove "data:image/png;base64," prefix)
-      // because the ResultsPage might add it again, or we can pass the full string 
-      // if the ResultsPage supports it. 
-      // Based on your ResultsPage logic, passing the raw base64 part is safest if it adds the header manually.
-      // But your updated logic handles both. Let's strip it to be safe for the backend-style format.
-      const cleanBase64 = (dataUrl: string) => dataUrl.split(',')[1] || "";
+      // If either returned empty, fallback to a tiny placeholder so UI doesn't break
+      const placeholder = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAEElEQVR42mNgYGD4DwABBAEAfm2ZbQAAAABJRU5ErkJggg==";
+
+      const finalMask = maskDataUrl || placeholder;
+      const finalGradcam = gradcamDataUrl || placeholder;
+
+      // Some parts of your app might expect raw base64 without the prefix.
+      // Detect and strip header if you need the raw base64 string:
+      const stripPrefix = (dataUri) => {
+        const parts = (dataUri || "").split(",");
+        return parts.length > 1 ? parts[1] : dataUri; // returns raw base64 or original if no comma
+      };
 
       const demoResult = {
         predicted_disease: "Glaucoma",
         confidence: 0.98,
         probabilities: {
-          "Glaucoma": 0.98,
-          "Cataract": 0.01,
+          Glaucoma: 0.98,
+          Cataract: 0.01,
           "Diabetic Retinopathy": 0.01,
-          "Normal": 0.00
+          Normal: 0.0,
         },
-        heatmap_png_base64: cleanBase64(heatmapData),
-        mask_png_base64: cleanBase64(maskData)
+        // choose which format your Results page expects:
+        // - full data URI: finalGradcam (e.g. "data:image/png;base64,...")
+        // - raw base64: stripPrefix(finalGradcam)
+        heatmap_png_base64: stripPrefix(finalGradcam),
+        mask_png_base64: stripPrefix(finalMask),
       };
 
-      // 3. Navigate
-      navigate("/results", { 
-        state: { 
+      navigate("/results", {
+        state: {
           result: demoResult,
-          // Original image can be passed as a direct URL since it's just an <img> tag
-          imageUrl: "/original.jpg" 
-        } 
+          // imageUrl used for <img src="..."> on results page; public root path works here
+          imageUrl: originalUrl,
+        },
       });
-
-    } catch (error) {
-      console.error("Demo failed", error);
+    } catch (err) {
+      console.error("Demo flow failed:", err);
     } finally {
       setLoadingDemo(false);
     }
@@ -93,32 +101,23 @@ const Home = () => {
               </span>
               AI-Powered Retinal Screening V2.0
             </div>
-            
+
             <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight mb-8 max-w-4xl mx-auto leading-tight">
-              Advanced Eye Care <br/>
+              Advanced Eye Care <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Through Artificial Intelligence</span>
             </h1>
-            
+
             <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-12 leading-relaxed">
               Early detection of Cataract, Glaucoma, and Diabetic Retinopathy using state-of-the-art deep learning algorithms.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button size="lg" onClick={handleStart} className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl">
-                <Upload className="mr-2 h-5 w-5" /> {t('analyze_btn') || 'Start Diagnosis'}
+                <Upload className="mr-2 h-5 w-5" /> {t("analyze_btn") || "Start Diagnosis"}
               </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                onClick={handleDemo} 
-                disabled={loadingDemo}
-                className="h-14 px-8 text-lg rounded-full"
-              >
-                {loadingDemo ? (
-                    <><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading Demo...</>
-                ) : (
-                    <><PlayCircle className="mr-2 h-5 w-5" /> View Demo Result</>
-                )}
+
+              <Button size="lg" variant="outline" onClick={handleDemo} disabled={loadingDemo} className="h-14 px-8 text-lg rounded-full">
+                {loadingDemo ? (<><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Loading Demo...</>) : (<><PlayCircle className="mr-2 h-5 w-5" /> View Demo Result</>)}
               </Button>
             </div>
           </motion.div>
