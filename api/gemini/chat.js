@@ -41,10 +41,10 @@ export default async function handler(req, res) {
       },
     ];
 
-// Use v1beta and a supported model for generateContent
   const url =
-      process.env.GEMINI_API_URL?.trim() ||
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+        process.env.GEMINI_API_URL?.trim() ||
+            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+
 
 
     const resp = await fetch(url, {
