@@ -68,65 +68,110 @@ const Home = () => {
     });
   };
 
-  return (
-    <div className="min-h-screen bg-white">
-      <section className="relative pt-20 pb-32 overflow-hidden">
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-700 text-sm font-medium mb-8">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-              </span>
-              AI-Powered Retinal Screening V2.0
-            </div>
-            
-            <h1 className="text-5xl md:text-7xl font-bold text-slate-900 tracking-tight mb-8 max-w-4xl mx-auto leading-tight">
-              Advanced Eye Care <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">Through Artificial Intelligence</span>
-            </h1>
-            
-            <p className="text-xl text-slate-600 max-w-2xl mx-auto mb-12 leading-relaxed">
-              Early detection of Cataract, Glaucoma, and Diabetic Retinopathy using state-of-the-art deep learning algorithms.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Button size="lg" onClick={handleStart} className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl">
-                <Upload className="mr-2 h-5 w-5" /> {t('analyze_btn') || 'Start Diagnosis'}
-              </Button>
-              <Button size="lg" variant="outline" onClick={handleDemo} className="h-14 px-8 text-lg rounded-full">
-                <PlayCircle className="mr-2 h-5 w-5" /> View Demo Result
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      <section className="py-24 bg-slate-50">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { icon: Activity, color: "text-green-600", bg: "bg-green-100", title: "Multi-Disease Detection", desc: "Detects Cataracts, Glaucoma, and DR with 94% accuracy." },
-              { icon: Shield, color: "text-blue-600", bg: "bg-blue-100", title: "Medical Grade Privacy", desc: "Encrypted and anonymized data processing." },
-              { icon: Zap, color: "text-amber-600", bg: "bg-amber-100", title: "Instant Analysis", desc: "Get detailed diagnostic reports in seconds." }
-            ].map((feature, i) => (
-              <Card key={i} className="border-none shadow-lg bg-white/50 backdrop-blur-sm hover:bg-white transition-colors">
-  <CardContent className="p-8">
-    <div
-      className={`w-12 h-12 ${feature.bg} rounded-2xl flex items-center justify-center mb-6 ${feature.color}`}
-    >
-      <feature.icon size={24} />
-    </div>
-    {/* ...rest of your content */}
-  </CardContent>
-</Card>
-
-            ))}
+ return (
+  <div className="min-h-screen bg-background">
+    <section className="relative pt-20 pb-32 overflow-hidden">
+      <div className="container mx-auto px-4 text-center relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-secondary text-secondary-foreground text-sm font-medium mb-8">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500" />
+            </span>
+            AI-Powered Retinal Screening V2.0
           </div>
+
+          <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 max-w-4xl mx-auto leading-tight text-foreground">
+            Advanced Eye Care <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-500">
+              Through Artificial Intelligence
+            </span>
+          </h1>
+
+          <p className="text-xl max-w-2xl mx-auto mb-12 leading-relaxed text-muted-foreground">
+            Early detection of Cataract, Glaucoma, and Diabetic Retinopathy using
+            state-of-the-art deep learning algorithms.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            {/* Primary button stays custom (dark pill) */}
+            <Button
+              size="lg"
+              onClick={handleStart}
+              className="h-14 px-8 text-lg rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl dark:bg-primary dark:hover:bg-primary-soft dark:text-primary-foreground"
+            >
+              <Upload className="mr-2 h-5 w-5" />{" "}
+              {t("analyze_btn") || "Start Diagnosis"}
+            </Button>
+
+            {/* Outline button – force good contrast in both themes */}
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={handleDemo}
+              className="h-14 px-8 text-lg rounded-full border-border bg-background text-foreground hover:bg-accent hover:text-accent-foreground"
+            >
+              <PlayCircle className="mr-2 h-5 w-5" /> View Demo Result
+            </Button>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+
+    {/* Use semantic background instead of fixed slate-50 */}
+    <section className="py-24 bg-muted">
+      <div className="container mx-auto px-4">
+        <div className="grid md:grid-cols-3 gap-8">
+          {[
+            {
+              icon: Activity,
+              color: "text-green-600 dark:text-green-400",
+              bg: "bg-green-100 dark:bg-green-900/40",
+              title: "Multi-Disease Detection",
+              desc: "Detects Cataracts, Glaucoma, and DR with 94% accuracy.",
+            },
+            {
+              icon: Shield,
+              color: "text-blue-600 dark:text-blue-400",
+              bg: "bg-blue-100 dark:bg-blue-900/40",
+              title: "Medical Grade Privacy",
+              desc: "Encrypted and anonymized data processing.",
+            },
+            {
+              icon: Zap,
+              color: "text-amber-600 dark:text-amber-400",
+              bg: "bg-amber-100 dark:bg-amber-900/40",
+              title: "Instant Analysis",
+              desc: "Get detailed diagnostic reports in seconds.",
+            },
+          ].map((feature, i) => (
+            <Card
+              key={i}
+              className="border-none shadow-lg bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
+            >
+              <CardContent className="p-8">
+                <div
+                  className={`w-12 h-12 ${feature.bg} rounded-2xl flex items-center justify-center mb-6 ${feature.color}`}
+                >
+                  <feature.icon size={24} />
+                </div>
+                <h3 className="text-lg font-semibold mb-2 text-foreground">
+                  {feature.title}
+                </h3>
+                <p className="text-sm text-muted-foreground">{feature.desc}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </section>
-    </div>
-  );
+      </div>
+    </section>
+  </div>
+);
+
 };
 
 export default Home;
