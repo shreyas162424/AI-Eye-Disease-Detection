@@ -123,52 +123,85 @@ const Home = () => {
     </section>
 
     {/* Use semantic background instead of fixed slate-50 */}
-    <section className="py-24 bg-muted">
-      <div className="container mx-auto px-4">
-        <div className="grid md:grid-cols-3 gap-8">
-          {[
-            {
-              icon: Activity,
-              color: "text-green-600 dark:text-green-400",
-              bg: "bg-green-100 dark:bg-green-900/40",
-              title: "Multi-Disease Detection",
-              desc: "Detects Cataracts, Glaucoma, and DR with 94% accuracy.",
-            },
-            {
-              icon: Shield,
-              color: "text-blue-600 dark:text-blue-400",
-              bg: "bg-blue-100 dark:bg-blue-900/40",
-              title: "Medical Grade Privacy",
-              desc: "Encrypted and anonymized data processing.",
-            },
-            {
-              icon: Zap,
-              color: "text-amber-600 dark:text-amber-400",
-              bg: "bg-amber-100 dark:bg-amber-900/40",
-              title: "Instant Analysis",
-              desc: "Get detailed diagnostic reports in seconds.",
-            },
-          ].map((feature, i) => (
-            <Card
-              key={i}
-              className="border-none shadow-lg bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
-            >
-              <CardContent className="p-8">
-                <div
-                  className={`w-12 h-12 ${feature.bg} rounded-2xl flex items-center justify-center mb-6 ${feature.color}`}
-                >
-                  <feature.icon size={24} />
-                </div>
-                <h3 className="text-lg font-semibold mb-2 text-foreground">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-muted-foreground">{feature.desc}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </section>
+    <section className="py-24 bg-muted/60 border-t border-border/60">
+  <div className="container mx-auto px-4">
+    <div className="max-w-3xl mx-auto text-center mb-14">
+      <p className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-secondary text-secondary-foreground/80 uppercase tracking-wide">
+        Clinical-Grade AI Pipeline
+      </p>
+      <h2 className="mt-4 text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+        Built for ophthalmology teams, not just demos
+      </h2>
+      <p className="mt-3 text-sm md:text-base text-muted-foreground">
+        Every scan is processed through a secure, multi-stage workflow designed
+        to maximise diagnostic confidence and minimise risk.
+      </p>
+    </div>
+
+    <div className="grid md:grid-cols-3 gap-8">
+      {[
+        {
+          icon: Activity,
+          accent: "from-emerald-400/70 via-emerald-500/60 to-emerald-300/60",
+          chip: "Disease Coverage",
+          title: "Multi-Disease Detection",
+          desc: "Single model screens for Diabetic Retinopathy, Glaucoma and Cataract with 94% test-set accuracy.",
+        },
+        {
+          icon: Shield,
+          accent: "from-sky-400/70 via-blue-500/60 to-cyan-300/60",
+          chip: "Security & Compliance",
+          title: "Medical-Grade Privacy",
+          desc: "On-device anonymisation, encrypted transmission and audit-ready logs for clinical workflows.",
+        },
+        {
+          icon: Zap,
+          accent: "from-amber-400/70 via-orange-500/60 to-yellow-300/60",
+          chip: "Turnaround Time",
+          title: "Instant Reporting",
+          desc: "Grad-CAM heatmaps, lesion overlays and probability charts generated in just a few seconds.",
+        },
+      ].map((feature, i) => (
+        <Card
+          key={i}
+          className="group relative overflow-hidden border border-border/70 bg-card/90 backdrop-blur-xl shadow-lg hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-300"
+        >
+          {/* soft gradient glow in the corner */}
+          <div
+            className={`pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-gradient-to-br ${feature.accent} opacity-40 blur-2xl group-hover:opacity-60 transition-opacity`}
+          />
+
+          <CardContent className="relative p-7 flex flex-col h-full">
+            {/* chip */}
+            <span className="inline-flex items-center self-start rounded-full border border-border/70 bg-background/80 px-3 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground mb-4">
+              {feature.chip}
+            </span>
+
+            {/* icon */}
+            <div className="mb-5 inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-background/90 shadow-md ring-1 ring-border/70">
+              <feature.icon className="h-6 w-6 text-primary" />
+            </div>
+
+            {/* title + description */}
+            <h3 className="text-lg font-semibold mb-2 text-foreground">
+              {feature.title}
+            </h3>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {feature.desc}
+            </p>
+
+            {/* subtle footer line */}
+            <div className="mt-6 pt-4 border-t border-border/60 text-[11px] uppercase tracking-wide text-muted-foreground/80 flex items-center gap-2">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400/80 group-hover:bg-emerald-300" />
+              AI-assisted, clinician-in-the-loop workflow
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  </div>
+</section>
+
   </div>
 );
 
