@@ -3,7 +3,16 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { v4 as uuidv4 } from "uuid";
 import { saveScan } from "../lib/scanStorage";
-import { ArrowLeft, AlertCircle, CheckCircle, Info, Calendar, MapPin, Share2, ZoomIn } from "lucide-react";
+import {
+  ArrowLeft,
+  AlertCircle,
+  CheckCircle,
+  Info,
+  Calendar,
+  MapPin,
+  Share2,
+  ZoomIn,
+} from "lucide-react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -26,7 +35,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { PredictionResult } from "@/lib/api";
 import ChatWidget from "@/components/ChatWidget";
 
-// --- NEW COMPONENTS ---
 import { CompareSlider } from "@/components/CompareSlider";
 import { ReportView } from "@/components/ReportView";
 import { Feedback } from "@/components/Feedback";
@@ -73,7 +81,7 @@ const ResultsPage: React.FC = () => {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [modalSrc, setModalSrc] = useState<string | null>(null);
-  const [opacity, setOpacity] = useState<number>(0.55); // Heatmap opacity state
+  const [opacity, setOpacity] = useState<number>(0.55);
 
   useEffect(() => {
     const state = location.state as LocationState | undefined;
@@ -127,16 +135,14 @@ const ResultsPage: React.FC = () => {
     );
   }
 
-  // 🆕 detect invalid image case from backend
+  // 🆕 detect invalid / non-retinal cases from backend
+  const backendMessage = (result as any)?.message as string | undefined;
+  const baseKey = normalizePredKey(result.predicted_disease);
   const isInvalid =
     result.predicted_disease === "Invalid / Non-retinal Image" ||
-    normalizePredKey(result.predicted_disease) === "invalid_nonretinal_image";
+    baseKey === "invalid_nonretinal_image";
 
-  const backendMessage = (result as any)?.message as string | undefined;
-
-  // build predKey with awareness of invalid case
-  const rawLabelForKey = isInvalid ? "invalid_nonretinal_image" : result.predicted_disease || "normal";
-  const predKey = normalizePredKey(rawLabelForKey);
+  const predKey = isInvalid ? "invalid_nonretinal_image" : baseKey;
   const friendlyLabel = isInvalid
     ? "Invalid / Non-retinal Image"
     : predKey.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
@@ -235,7 +241,7 @@ const ResultsPage: React.FC = () => {
       urgency: "Consult 1-2 weeks",
       recommendations: ["Retina specialist", "Blood sugar control"],
     },
-    // 🆕 special entry for invalid images
+    // 🆕 special entry for invalid image
     invalid_nonretinal_image: {
       title: "Invalid / Non-retinal Image",
       description:
@@ -245,7 +251,7 @@ const ResultsPage: React.FC = () => {
       urgency: "Please upload a proper retinal fundus image taken with a fundus camera.",
       recommendations: [
         "Ensure the image clearly shows the retina (back of the eye).",
-        "Avoid selfies, external eye photos, documents, or random images.",
+        "Avoid selfies, external eye photos, documents, or random pictures.",
         "Use a clinical fundus image for screening.",
       ],
     },
@@ -253,10 +259,9 @@ const ResultsPage: React.FC = () => {
 
   const info = diseaseInfo[predKey] ?? diseaseInfo["normal"];
 
-  // 🆕 Adjust chat system prompt for invalid vs valid
   const chatSystemPrompt = isInvalid
-    ? "You are an AI assistant for an ophthalmology screening app. The uploaded image appears to be invalid or non-retinal. Politely explain to the user that a proper retinal fundus image is required for analysis and give brief instructions on what such an image looks like."
-    : `Medical assistant. Screening output: ${friendlyLabel} (${confidence}%). Explain results in simple language, emphasise that this is not a final diagnosis and encourage consulting an eye specialist.`;
+    ? "You are an AI assistant for an ophthalmology screening app. The uploaded image appears to be invalid or non-retinal. Politely explain that a proper retinal fundus image is required for analysis and give short instructions on how such a scan should look."
+    : `Medical assistant. Diagnosis: ${friendlyLabel} (${confidence}%). Explain simply, emphasise that this is screening only and not a final diagnosis.`;
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl relative">
@@ -276,7 +281,7 @@ const ResultsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 🆕 Show a red alert if image is invalid */}
+        {/* 🆕 Show red alert for invalid images */}
         {isInvalid && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -290,7 +295,7 @@ const ResultsPage: React.FC = () => {
         <Card
           className={`shadow-lg border-2 ${
             isInvalid
-              ? "border-red-200 bg-red-50 text-slate-900" // 🆕 special styling for invalid
+              ? "border-red-200 bg-red-50 text-slate-900"
               : isNormal
               ? "border-green-200 bg-green-50 text-slate-900"
               : "border-yellow-200 bg-yellow-50 text-slate-900"
@@ -329,7 +334,7 @@ const ResultsPage: React.FC = () => {
                 <p className="text-sm font-medium text-yellow-700">{info.urgency}</p>
               </div>
 
-              {/* Compare Slider – only meaningful if not invalid */}
+              {/* Compare Slider – hide complex overlays when invalid */}
               {!isInvalid && imageUrl && maskSrc ? (
                 <div className="space-y-4">
                   <h3 className="font-semibold flex gap-2">
@@ -354,68 +359,68 @@ const ResultsPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* ORIGINAL GRAD-CAM & MASK SECTION */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Grad-CAM Heatmap – only if not invalid */}
-          {!isInvalid && gradcamSrc && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <Info className="h-5 w-5" /> AI Focus Heatmap
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center gap-4">
-                  <div className="relative w-full max-w-lg border rounded-lg overflow-hidden">
-                    <img
-                      src={imageUrl || ""}
-                      alt="Original"
-                      className="w-full h-auto object-cover"
-                    />
-                    <img
-                      src={gradcamSrc}
-                      alt="Heatmap"
-                      className="absolute inset-0 w-full h-full object-cover mix-blend-screen pointer-events-none"
-                      style={{ opacity }}
-                    />
+        {/* Grad-CAM & Mask – only for valid screenings */}
+        {!isInvalid && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {gradcamSrc && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Info className="h-5 w-5" /> AI Focus Heatmap
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative w-full max-w-lg border rounded-lg overflow-hidden">
+                      <img
+                        src={imageUrl || ""}
+                        alt="Original"
+                        className="w-full h-auto object-cover"
+                      />
+                      <img
+                        src={gradcamSrc}
+                        alt="Heatmap"
+                        className="absolute inset-0 w-full h-full object-cover mix-blend-screen pointer-events-none"
+                        style={{ opacity }}
+                      />
+                    </div>
+                    <div className="flex flex-col items-center w-full max-w-md">
+                      <label className="text-sm font-medium text-slate-600 mb-2">
+                        Heatmap Intensity — {Math.round(opacity * 100)}%
+                      </label>
+                      <input
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.05}
+                        value={opacity}
+                        onChange={(e) => setOpacity(Number(e.target.value))}
+                        className="w-full accent-indigo-600"
+                      />
+                    </div>
                   </div>
-                  <div className="flex flex-col items-center w-full max-w-md">
-                    <label className="text-sm font-medium text-slate-600 mb-2">
-                      Heatmap Intensity — {Math.round(opacity * 100)}%
-                    </label>
-                    <input
-                      type="range"
-                      min={0}
-                      max={1}
-                      step={0.05}
-                      value={opacity}
-                      onChange={(e) => setOpacity(Number(e.target.value))}
-                      className="w-full accent-indigo-600"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+                </CardContent>
+              </Card>
+            )}
 
-          {/* Segmentation Mask – only if not invalid */}
-          {!isInvalid && maskSrc && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-xl flex items-center gap-2">
-                  <Info className="h-5 w-5" /> Lesion Mask
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-col items-center gap-4">
-                  <div className="relative w-full max-w-lg border rounded-lg overflow-hidden bg-black">
-                    <img src={maskSrc} alt="Mask" className="w-full h-auto object-contain" />
+            {maskSrc && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <Info className="h-5 w-5" /> Lesion Mask
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="relative w-full max-w-lg border rounded-lg overflow-hidden bg-black">
+                      <img src={maskSrc} alt="Mask" className="w-full h-auto object-contain" />
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
 
         {/* Probability charts – hide for invalid */}
         {!isInvalid && (
@@ -434,6 +439,7 @@ const ResultsPage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-xl">Breakdown</CardTitle>
@@ -451,7 +457,6 @@ const ResultsPage: React.FC = () => {
           </div>
         )}
 
-        {/* Recommendations */}
         <Card>
           <CardHeader>
             <CardTitle>Recommendations</CardTitle>
@@ -499,9 +504,7 @@ const ResultsPage: React.FC = () => {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Important:</strong> This AI tool is for screening and educational purposes only.
-            It does not replace a professional diagnosis. Always consult a qualified eye
-            specialist.
+            <strong>Important:</strong> AI screening only. Consult a doctor.
           </AlertDescription>
         </Alert>
       </motion.div>
