@@ -106,7 +106,9 @@ const ResultsPage: React.FC = () => {
         gradcamDataUrl: result.heatmap_png_base64
           ? `data:image/png;base64,${result.heatmap_png_base64}`
           : undefined,
-        maskDataUrl: result.mask_png_base64 ? `data:image/png;base64,${result.mask_png_base64}` : undefined,
+        maskDataUrl: result.mask_png_base64
+          ? `data:image/png;base64,${result.mask_png_base64}`
+          : undefined,
         notes: "",
       };
 
@@ -127,19 +129,11 @@ const ResultsPage: React.FC = () => {
       .replace(/[^\w]/g, "");
   };
 
-  if (!result) {
-    return (
-      <div className="flex items-center justify-center min-h-[24rem]">
-        <p className="text-muted-foreground">Loading...</p>
-      </div>
-    );
-  }
-
   // 🆕 detect invalid / non-retinal cases from backend
   const backendMessage = (result as any)?.message as string | undefined;
-  const baseKey = normalizePredKey(result.predicted_disease);
+  const baseKey = normalizePredKey(result?.predicted_disease);
   const isInvalid =
-    result.predicted_disease === "Invalid / Non-retinal Image" ||
+    result?.predicted_disease === "Invalid / Non-retinal Image" ||
     baseKey === "invalid_nonretinal_image";
 
   const predKey = isInvalid ? "invalid_nonretinal_image" : baseKey;
@@ -171,10 +165,12 @@ const ResultsPage: React.FC = () => {
       ),
     [probabilities]
   );
+
   const chartValues = useMemo(
     () => Object.values(probabilities).map((v) => Number(v) || 0),
     [probabilities]
   );
+
   const hasChartData = chartValues.length > 0;
   const chartColors = ["#4f46e5", "#10b981", "#f59e0b", "#ef4444"];
 
@@ -241,7 +237,6 @@ const ResultsPage: React.FC = () => {
       urgency: "Consult 1-2 weeks",
       recommendations: ["Retina specialist", "Blood sugar control"],
     },
-    // 🆕 special entry for invalid image
     invalid_nonretinal_image: {
       title: "Invalid / Non-retinal Image",
       description:
@@ -263,6 +258,15 @@ const ResultsPage: React.FC = () => {
     ? "You are an AI assistant for an ophthalmology screening app. The uploaded image appears to be invalid or non-retinal. Politely explain that a proper retinal fundus image is required for analysis and give short instructions on how such a scan should look."
     : `Medical assistant. Diagnosis: ${friendlyLabel} (${confidence}%). Explain simply, emphasise that this is screening only and not a final diagnosis.`;
 
+  // ✅ SAFE: loading guard AFTER all hooks/useMemo
+  if (!result) {
+    return (
+      <div className="flex items-center justify-center min-h-[24rem]">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl relative">
       <motion.div
@@ -281,7 +285,7 @@ const ResultsPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 🆕 Show red alert for invalid images */}
+        {/* Invalid image alert */}
         {isInvalid && (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -334,7 +338,7 @@ const ResultsPage: React.FC = () => {
                 <p className="text-sm font-medium text-yellow-700">{info.urgency}</p>
               </div>
 
-              {/* Compare Slider – hide complex overlays when invalid */}
+              {/* Compare Slider / Original image */}
               {!isInvalid && imageUrl && maskSrc ? (
                 <div className="space-y-4">
                   <h3 className="font-semibold flex gap-2">
