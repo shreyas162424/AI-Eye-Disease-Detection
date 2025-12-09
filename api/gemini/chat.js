@@ -1,10 +1,10 @@
-// api/gemini/chat.js
-// Vercel Serverless Function that proxies to Gemini
+// api/gemini/chat.js (Now proxied to Groq)
 export const config = {
   maxDuration: 60,
 };
+
 export default async function handler(req, res) {
-  // Allow CORS (optional, but safe)
+  // Allow CORS
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
@@ -25,52 +25,42 @@ export default async function handler(req, res) {
       return res.status(400).json({
         error: "Invalid request",
         message: "Expected { messages: [{role, content}, ...] }",
-        receivedBody: body || null,
       });
     }
 
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY; // <--- CHANGED TO GROQ
     if (!apiKey) {
-      return res.status(500).json({ error: "GEMINI_API_KEY not set in env" });
+      return res.status(500).json({ error: "GROQ_API_KEY not set in env" });
     }
 
-    // Build a simple generateContent payload
-    const contents = [
-      {
-        parts: messages.map((m) => ({
-          text: `${m.role.toUpperCase()}: ${m.content}`,
-        })),
-      },
-    ];
-
-  // NEW CODE (Fixes the error)
- const url =
-        process.env.GEMINI_API_URL?.trim() ||
-                https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent
-
+    // Groq API Endpoint
+    const url = "https://api.groq.com/openai/v1/chat/completions";
 
     const resp = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
+        "Authorization": `Bearer ${apiKey}`, // <--- Standard Bearer Token
       },
-      body: JSON.stringify({ contents }),
+      body: JSON.stringify({
+        model: "llama-3.3-70b-versatile", // <--- High quality free model
+        messages: messages,
+        temperature: 0.6,
+        max_tokens: 1024,
+      }),
     });
 
-    const text = await resp.text().catch(() => "");
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch {
-      data = text;
+    const data = await resp.json();
+
+    if (!resp.ok) {
+        console.error("Groq API Error:", data);
+        return res.status(resp.status).json(data);
     }
 
-    return res.status(resp.status).json(data);
+    return res.status(200).json(data);
+
   } catch (err) {
     console.error("Error in /api/gemini/chat:", err);
-    return res
-      .status(500)
-      .json({ error: "proxy error", details: String(err) });
+    return res.status(500).json({ error: "proxy error", details: String(err) });
   }
 }
