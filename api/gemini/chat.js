@@ -45,8 +45,8 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: "llama-3.3-70b-versatile", // <--- High quality free model
         messages: messages,
-        temperature: 0.6,
-        max_tokens: 1024,
+        temperature: 0.3,
+        max_tokens: 150,
       }),
     });
 
