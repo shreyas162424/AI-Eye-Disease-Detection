@@ -53,15 +53,18 @@ export default function ChatAssistant({
     bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, loading]);
 
-  // ---------- Networking ----------
-  async function callGeminiAPI(payloadMessages: Array<{ role: string; content: string }>) {
-    const url = "/api/gemini/chat";
+  // ---------- Networking (Updated for Groq response structure) ----------
+  async function callAPI(payloadMessages: Array<{ role: string; content: string }>) {
+    // We kept the endpoint name same so you don't have to change file structure
+    const url = "/api/gemini/chat"; 
+    
     const resp = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messages: payloadMessages }),
       credentials: "omit",
     });
+    
     const text = await resp.text();
     if (!resp.ok) {
       throw new Error(`Server ${resp.status}: ${text || resp.statusText}`);
@@ -73,72 +76,28 @@ export default function ChatAssistant({
     }
   }
 
-  // ---------- Response extractor ----------
+  // ---------- Response extractor (Simplified for Groq/OpenAI format) ----------
   function extractAssistantText(data: any): string {
     if (!data) return "";
-    try {
-      if (Array.isArray(data.candidates) && data.candidates.length > 0) {
-        const cand = data.candidates[0];
-        const content = cand.content ?? cand.message ?? cand;
-        if (content) {
-          if (Array.isArray(content.parts) && content.parts.length) {
-            const parts = content.parts
-              .map((p: any) => (typeof p === "string" ? p : p?.text ?? ""))
-              .filter(Boolean);
-            if (parts.length) return parts.join("\n\n");
-          }
-          if (Array.isArray(content)) {
-            const arr = content.map((c: any) => c?.text ?? "").filter(Boolean);
-            if (arr.length) return arr.join("\n\n");
-          }
-          if (typeof content.text === "string" && content.text.trim()) return content.text;
-          if (typeof cand.text === "string" && cand.text.trim()) return cand.text;
-          if (typeof cand.message === "string" && cand.message.trim()) return cand.message;
-        }
-      }
-    } catch {}
-    try {
-      if (Array.isArray(data.output)) {
-        for (const out of data.output) {
-          if (!out) continue;
-          if (Array.isArray(out.content) && out.content.length) {
-            const outParts = out.content.map((c: any) => c?.text ?? "").filter(Boolean);
-            if (outParts.length) return outParts.join("\n\n");
-          }
-          if (typeof out?.content?.text === "string") return out.content.text;
-        }
-      }
-    } catch {}
-    try {
-      if (Array.isArray(data.messages)) {
-        const texts = data.messages
-          .map((m: any) => {
-            if (!m) return "";
-            if (typeof m === "string") return m;
-            if (m?.content) {
-              if (typeof m.content === "string") return m.content;
-              if (Array.isArray(m.content)) return m.content.map((c: any) => c?.text ?? "").join("");
-              if (typeof m.content.text === "string") return m.content.text;
-            }
-            if (typeof m.text === "string") return m.text;
-            return "";
-          })
-          .filter(Boolean);
-        if (texts.length) return texts.join("\n\n");
-      }
-    } catch {}
-    if (typeof data.output_text === "string") return data.output_text;
-    if (typeof data.outputText === "string") return data.outputText;
-    if (typeof data.text === "string") return data.text;
-    if (typeof data._rawText === "string") return data._rawText;
-    try {
-      return JSON.stringify(data);
-    } catch {
-      return "";
+
+    // 1. Check for standard OpenAI/Groq format
+    if (data.choices && Array.isArray(data.choices) && data.choices.length > 0) {
+      return data.choices[0].message?.content || "";
     }
+    
+    // 2. Check for Error messages
+    if (data.error) {
+      return `API Error: ${data.error.message || JSON.stringify(data.error)}`;
+    }
+
+    // 3. Fallback: Raw text or generic
+    if (typeof data._rawText === "string") return data._rawText;
+    
+    return "No response text found.";
   }
 
   // ---------- Simple block formatting (paragraphs + lists) ----------
+  // (Kept original logic for safety, though ReactMarkdown handles most of this)
   function renderFormatted(text: string) {
     if (!text) return null;
     const blocks = text.split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
@@ -175,12 +134,16 @@ export default function ChatAssistant({
 
     try {
       const prior = messagesRef.current || [];
-      const systems = prior.filter((x) => x.role === "system").map((s) => ({ role: "system", content: s.text }));
-      const convo = prior.filter((x) => x.role !== "system").map((m) => ({ role: m.role, content: m.text }));
+      // Filter out error messages from history so they don't confuse the AI
+      const validPrior = prior.filter(m => m.role !== "error");
+      
+      const systems = validPrior.filter((x) => x.role === "system").map((s) => ({ role: "system", content: s.text }));
+      const convo = validPrior.filter((x) => x.role !== "system").map((m) => ({ role: m.role, content: m.text }));
       const payload = [...systems, ...convo, { role: "user", content: userText }];
 
-      const result = await callGeminiAPI(payload);
+      const result = await callAPI(payload);
       const assistantText = extractAssistantText(result) || "No assistant text returned.";
+      
       const assistantMsg: Msg = { id: `a-${Date.now()}`, role: "assistant", text: assistantText, time: new Date().toISOString() };
       setMessages((m) => [...m, assistantMsg]);
     } catch (err: any) {
@@ -199,8 +162,10 @@ export default function ChatAssistant({
     try {
       const trigger = "Please explain the diagnosis and next steps in simple language.";
       const payload = [{ role: "system", content: initialSystemPrompt }, { role: "user", content: trigger }];
-      const result = await callGeminiAPI(payload);
+      
+      const result = await callAPI(payload);
       const assistantText = extractAssistantText(result) || "No assistant text returned.";
+      
       const assistantMsg: Msg = { id: `a-init-${Date.now()}`, role: "assistant", text: assistantText, time: new Date().toISOString() };
       setMessages((m) => [...m, assistantMsg]);
     } catch (err: any) {
