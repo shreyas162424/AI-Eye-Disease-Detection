@@ -256,7 +256,12 @@ const ResultsPage: React.FC = () => {
 
   const chatSystemPrompt = isInvalid
     ? "You are an AI assistant for an ophthalmology screening app. The uploaded image appears to be invalid or non-retinal. Politely explain that a proper retinal fundus image is required for analysis and give short instructions on how such a scan should look."
-    : `Medical assistant. Diagnosis: ${friendlyLabel} (${confidence}%). Explain simply, emphasise that this is screening only and not a final diagnosis.`;
+    : `Medical assistant. Diagnosis: ${friendlyLabel} (${confidence}%). 
+    Task:Explain simply, emphasise that this is screening only and not a final diagnosis.
+    RULES:
+    1. Keep answers under 50 words.
+    2. Use bullet points.
+    3. No fluff or greetings.`;
 
   // ✅ SAFE: loading guard AFTER all hooks/useMemo
   if (!result) {
