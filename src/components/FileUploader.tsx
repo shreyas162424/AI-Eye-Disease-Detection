@@ -154,14 +154,7 @@ export function FileUploader({ onFileSelect, selectedFile, preview, loading = fa
                 </label>
               </Button>
               
-              <Button 
-                variant="outline" 
-                size="lg"
-                onClick={() => setShowWebcam(true)}
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Use Camera
-              </Button>
+              
             </div>
 
             <input
