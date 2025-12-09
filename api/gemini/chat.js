@@ -44,10 +44,9 @@ export default async function handler(req, res) {
     ];
 
   // NEW CODE (Fixes the error)
-  const url =
-      process.env.GEMINI_API_URL?.trim() ||
-          https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=YOUR_API_KEY
-
+ const url =
+        process.env.GEMINI_API_URL?.trim() ||
+            "https://generativelanguage.googleapis.com/v1/models/gemini-2.0-flash:generateContent";
 
 
     const resp = await fetch(url, {
