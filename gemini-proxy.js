@@ -75,8 +75,8 @@ router.post("/chat", async (req, res) => {
     const apiKey = process.env.GEMINI_API_KEY || null;
 
     const defaultGenerateMessage = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateMessage";
-    const defaultGenerateContent = "https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent";
-
+    const defaultGenerateContent = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+    
     const headersBase = { "Content-Type": "application/json" };
     if (apiKey) headersBase["x-goog-api-key"] = apiKey;
 
